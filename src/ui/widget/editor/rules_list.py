@@ -1,18 +1,18 @@
 import enum
 import json
+import tkinter as tk
 from tkinter import ttk
 from tkinter.font import Font
 from typing import Optional, Any, List
 
 from psutil._pswindows import Priority
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
-from configuration.rule import Rule
-from constants.any import LOG, BOTH_SELECTORS_SET
+from configuration.rule import ServiceRule, ProcessRule
+from constants.any import BOTH_SELECTORS_SET
 from constants.priority_mappings import str_to_priority, str_to_iopriority
-from constants.ui import RULE_COLUMNS, ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
+from constants.ui import ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
     ScrollableTreeviewEvents
-from service.config_service import ConfigService
 from ui.widget.common.label import Image
 from ui.widget.common.treeview.editable import EditableTreeview
 from util.ui import icon16px, full_visible_bbox
@@ -20,20 +20,24 @@ from util.utils import extract_type, is_optional_type
 
 
 class RulesList(EditableTreeview):
-    unsaved_changes = False
-    _error_icons: dict[tuple[str, str], Image] = {}
+    def __init__(self, model: BaseModel, *args, **kwargs):
+        self.has_unsaved_changes = False
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, columns=list(RULE_COLUMNS.keys()), **kwargs, show='headings')
+        self._model = model
+        self._error_icons: dict[tuple[str, str], Image] = {}
+
+        super().__init__(*args, columns=list(self._model.model_fields.keys()), **kwargs, show='headings')
         self._setup_look()
 
         self.bind(EditableTreeviewEvents.CHANGE, lambda _: self._changed(), '+')
         self.bind(ScrollableTreeviewEvents.SCROLL, self._place_icons, '+')
         self.bind("<Button-1>", self._handle_click, '+')
+        self.bind("<Double-1>", self._handle_click, '+')
         self.bind("<Configure>", lambda _: self.after(1, self._place_icons), '+')
+        self.bind("<Control-Key>", self._on_key_press_tree, "+")
+        self.bind("<Delete>", lambda _: self.delete_selected_rows(), "+")
 
         self._setup_columns()
-        self._load_data()
 
     def _handle_click(self, event):
         row_id = self.identify_row(event.y)
@@ -43,12 +47,14 @@ class RulesList(EditableTreeview):
             return "break"
 
     def _setup_columns(self):
+        model_fields = self._model.model_fields
+
         for column_name in self["columns"]:
-            field_info = RULE_COLUMNS.get(column_name)
+            field_info = model_fields.get(column_name)
 
             if field_info:
                 title = field_info.title
-                width = self.font.measure(title) + 40
+                max_width_value_in_column = title
                 typ = extract_type(field_info.annotation)
                 values = []
 
@@ -57,15 +63,25 @@ class RulesList(EditableTreeview):
 
                 if issubclass(typ, enum.Enum):
                     values += list(str_to_priority.keys() if typ == Priority else str_to_iopriority.keys())
+                    max_width_value_in_column = max(values + [max_width_value_in_column], key=len)
 
                     self.column_type(column_name, "list")
                     self.column_values(column_name, values)
             else:
                 title = "?"
-                width = self.font.measure(title) + 40
+                max_width_value_in_column = title
+
+            extra = field_info.json_schema_extra or dict() if field_info else dict()
+            stretch = extra.get('stretchable_column_ui', False)
+            width = extra.get(
+                'width_ui',
+                int(self.font.measure(max_width_value_in_column) * 1.5)
+                if title else None
+            )
+            width = width * extra.get('scale_width_ui', 1) if width else None
 
             self.heading(column_name, text=title)
-            self.column(column_name, width=width, anchor='center', minwidth=width)
+            self.column(column_name, anchor='center', width=width, minwidth=width, stretch=stretch)
 
     def _setup_look(self):
         self.font = Font(family="TkDefaultFont")
@@ -77,32 +93,20 @@ class RulesList(EditableTreeview):
 
         self._error_icon = icon16px("exclamation-triangle", ERROR_COLOR)
 
-    def _load_data(self):
+    def set_raw_data(self, rules_raw: List[Any]):
         self.delete(*self.get_children())
-
         fields = self["columns"]
-        rules = ConfigService.load_rules_raw()
 
-        for rule in rules:
+        for rule in rules_raw:
             values = [rule.get(field_name, '') or '' for field_name in fields]
-            self.insert('', 'end', values=values)
+            self.insert('', tk.END, values=values)
 
-        self._save_state(False)
+        self.set_unsaved_changes(False)
 
-    def save_data(self) -> bool:
-        try:
-            if self.has_error():
-                return False
+    def get_data(self) -> List[Optional[ProcessRule | ServiceRule | tuple[Any, Any]]]:
+        return self._to_rules()
 
-            ConfigService.save_rules(self._to_rules())
-
-            self._save_state(False)
-            return True
-        except:
-            LOG.exception("Error when saving file.")
-            return False
-
-    def _to_rule(self, row_id) -> Rule | tuple[Any, Any]:
+    def _to_rule(self, row_id) -> ProcessRule | ServiceRule | tuple[Any, Any]:
         keys = self["columns"]
         values = self.item(row_id, 'values')
         dct = {
@@ -111,25 +115,27 @@ class RulesList(EditableTreeview):
         }
 
         try:
-            return Rule(**dct)
+            # noinspection PyCallingNonCallable
+            return self._model(**dct)
         except ValidationError as e:
             return row_id, json.loads(e.json())
 
-    def _to_rules(self) -> List[Optional[Rule | tuple[Any, Any]]]:
+    def _to_rules(self) -> List[Optional[ProcessRule | ServiceRule | tuple[Any, Any]]]:
         return [self._to_rule(row_id) for row_id in self.get_children()]
 
     def _errors(self) -> dict[Any, Any]:
-        return {rule[0]: rule[1] for rule in self._to_rules() if rule and not isinstance(rule, Rule)}
+        return {rule[0]: rule[1] for rule in self._to_rules() if
+                rule and not isinstance(rule, (ProcessRule, ServiceRule))}
 
     def has_error(self):
         return len(self._errors()) > 0
 
-    def _save_state(self, state: bool):
-        self.unsaved_changes = state
+    def set_unsaved_changes(self, state: bool):
+        self.has_unsaved_changes = state
         self.event_generate(RulesListEvents.UNSAVED_CHANGES_STATE)
 
     def _changed(self):
-        self._save_state(True)
+        self.set_unsaved_changes(True)
         self._handle_errors()
 
     def _handle_errors(self):
@@ -209,3 +215,26 @@ class RulesList(EditableTreeview):
 
     def error_icon_created(self, icon, tooltip):
         pass
+
+    def _on_key_press_tree(self, event):
+        ctrl = (event.state & 0x4) != 0
+
+        if ctrl and event.keycode == ord('A'):
+            self.select_all_rows()
+
+    def _get_default_values(self) -> List[Any]:
+        result = []
+        model_fields = self._model.model_fields
+
+        for column_name in self["columns"]:
+            field_info = model_fields.get(column_name)
+            extra = field_info.json_schema_extra or dict() if field_info else dict()
+            default_value = extra.get('default_ui', '')
+            result.append(default_value)
+
+        return result
+
+    def add_row(self, values=[]):
+        if not values:
+            values = self._get_default_values()
+        super().add_row(values)

@@ -6,7 +6,23 @@ from ui.widget.common.button import IconedButton
 from util.ui import icon16px
 
 
-class ActionsFrame(ttk.Frame):
+class EditorButtons(ttk.Frame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._setup_btn()
+
+    def _setup_btn(self):
+        self.save = save = IconedButton(
+            self,
+            text=" Apply",
+            command=lambda: self.event_generate(ActionEvents.SAVE),
+            image=icon16px("check", fill="cornflowerblue")
+        )
+        right_btn_pack = dict(side=tk.RIGHT, padx=(UI_PADDING, 0))
+        save.pack(**right_btn_pack)
+
+
+class RulesListButtons(ttk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._setup_btn()
@@ -21,9 +37,9 @@ class ActionsFrame(ttk.Frame):
 
         self.delete = delete = IconedButton(
             self,
-            text=" Delete",
+            text=" Del",
             command=lambda: self.event_generate(ActionEvents.DELETE),
-            image=icon16px("trash-alt", fill="red")
+            image=icon16px("trash-alt", fill="firebrick")
         )
 
         self.move_up = move_up = IconedButton(
@@ -40,16 +56,8 @@ class ActionsFrame(ttk.Frame):
             image=icon16px("arrow-down", fill="#1a1a1a")
         )
 
-        self.save = save = IconedButton(
-            self,
-            text=" Save",
-            command=lambda: self.event_generate(ActionEvents.SAVE),
-            image=icon16px("check", fill="cornflowerblue")
-        )
-
         left_btn_pack = dict(side=tk.LEFT, padx=(0, UI_PADDING))
         add.pack(**left_btn_pack)
         delete.pack(**left_btn_pack)
         move_up.pack(**left_btn_pack)
         move_down.pack(**left_btn_pack)
-        save.pack(side=tk.RIGHT)

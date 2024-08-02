@@ -7,7 +7,7 @@ from psutil import AccessDenied, NoSuchProcess
 from pyuac import isUserAdmin
 
 from configuration.config import Config
-from configuration.rule import Rule
+from configuration.rule import ProcessRule, ServiceRule
 from constants.any import LOG
 from constants.priority_mappings import iopriority_to_str, priority_to_str
 from enums.process import ProcessParameter
@@ -42,7 +42,7 @@ class RulesService(ABC):
         Returns:
             None
         """
-        if not config.rules:
+        if not (config.serviceRules or config.processRules):
             return
 
         cls.__light_gc_ignored_process_parameters()
@@ -59,14 +59,14 @@ class RulesService(ABC):
         cls.__handle_processes(config, processes, services)
 
     @classmethod
-    def __handle_processes(cls, config, processes, services):
+    def __handle_processes(cls, config: Config, processes: dict[int, Process], services: dict[int, Service]):
         for pid, process_info in processes.items():
             if pid in cls.__ignore_pids:
                 continue
 
             try:
                 service_info: Service = ServicesInfoService.get_by_pid(pid, services)
-                rule: Rule = cls.__first_rule_by_name(config.rules, service_info, process_info)
+                rule: Optional[ProcessRule | ServiceRule] = cls.__first_rule_by_name(config, service_info, process_info)
 
                 if not rule:
                     continue
@@ -95,7 +95,7 @@ class RulesService(ABC):
                 LOG.warning(f"No such process: {pid}")
 
     @classmethod
-    def __set_ionice(cls, not_success, process_info, rule: Rule):
+    def __set_ionice(cls, not_success, process_info, rule: ProcessRule | ServiceRule):
         if not rule.ioPriority or process_info.ionice == rule.ioPriority:
             return
 
@@ -109,7 +109,7 @@ class RulesService(ABC):
             not_success.append(parameter)
 
     @classmethod
-    def __set_nice(cls, not_success, process_info, rule: Rule):
+    def __set_nice(cls, not_success, process_info, rule: ProcessRule | ServiceRule):
         if not rule.priority or process_info.nice == rule.priority:
             return
 
@@ -123,7 +123,7 @@ class RulesService(ABC):
             not_success.append(parameter)
 
     @classmethod
-    def __set_affinity(cls, not_success, process_info: Process, rule: Rule):
+    def __set_affinity(cls, not_success, process_info: Process, rule: ProcessRule | ServiceRule):
         if not rule.affinity:
             return
 
@@ -140,13 +140,21 @@ class RulesService(ABC):
             not_success.append(parameter)
 
     @classmethod
-    def __first_rule_by_name(cls, rules: List[Rule], service: Service, process: Process) -> Optional[Rule]:
-        for rule in rules:
-            if service and fnmatch_cached(service.name, rule.serviceSelector):
+    def __first_rule_by_name(
+            cls,
+            config: Config,
+            service: Service,
+            process: Process
+    ) -> Optional[ProcessRule | ServiceRule]:
+        if service:
+            for rule in config.serviceRules:
+                if fnmatch_cached(service.name, rule.selector):
+                    return rule
+
+        for rule in config.processRules:
+            if fnmatch_cached(process.name, rule.selector):
                 return rule
 
-            if fnmatch_cached(process.name, rule.processSelector):
-                return rule
         return None
 
     @classmethod

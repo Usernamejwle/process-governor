@@ -6,8 +6,9 @@ from typing import Optional, List, Any
 
 from configuration.config import Config
 from configuration.logs import Logs
-from configuration.rule import Rule
+from configuration.rule import ProcessRule, ServiceRule
 from constants.any import CONFIG_FILE_NAME, CONFIG_FILE_ENCODING
+from enums.rules import RuleType
 from util.decorators import cached
 
 
@@ -78,13 +79,13 @@ class ConfigService(ABC):
         return prev_config, False
 
     @classmethod
-    def load_rules_raw(cls) -> List[Any]:
+    def load_rules_raw(cls, rule_type: RuleType) -> List[Any]:
         if not exists(CONFIG_FILE_NAME):
             cls.save_config(Config())
 
         with open(CONFIG_FILE_NAME, 'r', encoding=CONFIG_FILE_ENCODING) as file:
             json_data = json.load(file)
-            return json_data.get('rules', [])
+            return json_data.get(rule_type.field_in_config, [])
 
     @classmethod
     def load_logs(cls) -> Logs:
@@ -97,26 +98,31 @@ class ConfigService(ABC):
             return Logs(**json_data['logging'])
 
     @classmethod
-    def save_rules(cls, rules: List[Rule]):
+    def save_rules(cls, rule_type: RuleType, rules: List[ProcessRule | ServiceRule]):
         if rules is None:
             raise ValueError("rules is None")
 
         config = cls.load_config(False)
-        config.rules = rules
+        setattr(config, rule_type.field_in_config, rules)
 
         cls.save_config(config)
 
     @classmethod
     def rules_has_error(cls) -> bool:
         try:
-            rules: List[Any] = cls.load_rules_raw()
+            for rule_type in RuleType:
+                rules: List[Any] = cls.load_rules_raw(rule_type)
 
-            try:
-                for rule in rules:
-                    Rule(**rule)
-            except:
-                return True
+                try:
+                    for rule in rules:
+                        rule_type.clazz(**rule)
+                except:
+                    return True
         except:
             pass  # Yes, this is indeed a pass.
 
         return False
+
+
+if __name__ == '__main__':
+    print(ConfigService.rules_has_error())

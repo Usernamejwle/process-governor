@@ -44,15 +44,15 @@ Let's look at setting up optimization for two popular games:
 
 Let's proceed to set up the rules.
 
-### Opening the Rule Configurator
+### Opening the Rules Configurator
 
 1. Launch **Process Governor** if it is not already running.
 2. Click on the application icon <u>in the system tray</u> to open the menu.
-3. Select the **Configure Rules** option to open the rule configurator.
+3. Select the **Configure Rules** option to open the rules configurator.
 
 ### Adding a Rule for Starfield
 
-1. In the rule configurator interface, press the **Add** button to add a new rule.
+1. In the rules configurator interface, press the **Add** button to add a new rule.
 2. Enter the corresponding values in the columns:
     - **Process Selector:** `starfield.exe`.
     - **Priority:** `High`.
@@ -78,7 +78,7 @@ from use.
 
 ![game_optimization_rule_configurator_screenshot.png](../images/game_optimization_rule_configurator_screenshot.png)
 
-Once all the rules are configured, save them by pressing the **Save** button. Then you can close the rule configurator.
+Once all the rules are configured, save them by pressing the **Save** button. Then you can close the rules configurator.
 
 ### Game Process Monitoring
 

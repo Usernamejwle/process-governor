@@ -209,15 +209,15 @@ Example of the enabled **Run on Startup** option:
 
 ### Creating Rules
 
-#### Opening the Rule Configurator
+#### Opening the Rules Configurator
 
 1. Launch **Process Governor** if it is not already running.
 2. Click on the application icon <u>in the system tray</u> to open the menu.
-3. Select the **Configure Rules** option to open the rule configurator.
+3. Select the **Configure Rules** option to open the rules configurator.
 
 #### Adding a Rule for process Voicemeeter
 
-1. In the rule configurator interface, press the **Add** button to add a new rule.
+1. In the rules configurator interface, press the **Add** button to add a new rule.
 2. Enter the corresponding values in the columns:
     - **Process Selector:** `voicemeeter8x64.exe`
     - **Priority:** `Realtime`
@@ -250,7 +250,7 @@ Similarly, add the remaining rules in accordance with the screenshot:
 
 ### Saving the Settings
 
-Once all the rules are configured, save them by pressing the **Save** button. Then you can close the rule configurator.
+Once all the rules are configured, save them by pressing the **Save** button. Then you can close the rules configurator.
 After that, the program will regularly apply the rules to the corresponding processes and manage PC resources.
 
 ## Conclusion

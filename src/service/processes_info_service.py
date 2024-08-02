@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List
+from typing import List, Set
 
 import psutil
 from psutil import NoSuchProcess
@@ -23,9 +23,9 @@ class ProcessesInfoService(ABC):
             representing the running processes.
         """
         result: dict[int, Process] = {}
-        cls.__prev_pids = psutil.pids()
+        current_pids: List[int] = psutil.pids()
 
-        for pid in cls.__prev_pids:
+        for pid in current_pids:
             try:
                 process = psutil.Process(pid)
                 info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity'])
@@ -41,9 +41,10 @@ class ProcessesInfoService(ABC):
             except NoSuchProcess:
                 pass
 
+        cls.__prev_pids = set(current_pids)
         return result
 
-    __prev_pids: List[int] = []
+    __prev_pids: Set[int] = []
 
     @classmethod
     def get_new_processes(cls) -> dict[int, Process]:
@@ -55,7 +56,7 @@ class ProcessesInfoService(ABC):
             representing the newly created processes.
         """
         result: dict[int, Process] = {}
-        current_pids = psutil.pids()
+        current_pids: List[int] = psutil.pids()
 
         for pid in current_pids:
             if pid not in cls.__prev_pids:
@@ -74,6 +75,5 @@ class ProcessesInfoService(ABC):
                 except NoSuchProcess:
                     pass
 
-        cls.__prev_pids = current_pids
-
+        cls.__prev_pids = set(current_pids)
         return result

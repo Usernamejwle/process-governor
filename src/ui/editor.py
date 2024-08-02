@@ -1,28 +1,28 @@
 import os
 import tkinter as tk
 from threading import Thread
-from tkinter import ttk, messagebox
+from tkinter import messagebox, ttk
 
 from constants.any import LOG, LOG_FILE_NAME
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.resources import APP_ICON
-from constants.ui import RULE_COLUMNS, UI_PADDING, RC_WIN_SIZE, ActionEvents, RulesListEvents, EditableTreeviewEvents, \
-    RC_TITLE
-from ui.widget.editor.actions import ActionsFrame
-from ui.widget.editor.rules_list import RulesList
+from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, RC_TITLE, RulesListEvents, EditableTreeviewEvents
+from enums.rules import RuleType
+from ui.widget.editor.buttons import EditorButtons
+from ui.widget.editor.rules_tab import RulesTabs
 from ui.widget.editor.tooltip import Tooltip
 from util.messages import yesno_error_box
 
 
-class RuleConfigurator(tk.Tk):
+class RulesConfigurator(tk.Tk):
     _DEFAULT_TOOLTIP = (
         "To add a new rule, click the **Add** button.\n"
         "To edit a rule, **double-click** on the corresponding cell."
     )
 
-    _tree = None
+    _tabs = None
     _tooltip = None
-    _actions = None
+    _buttons = None
 
     def __init__(self):
         super().__init__()
@@ -63,7 +63,7 @@ class RuleConfigurator(tk.Tk):
 
     def _create_widgets(self):
         self._create_tooltips()
-        self._create_treeview()
+        self._create_tabs()
         self._create_buttons()
 
     def _create_tooltips(self):
@@ -71,15 +71,6 @@ class RuleConfigurator(tk.Tk):
         self._tooltip.pack(fill=tk.X, expand=False, side=tk.TOP, padx=UI_PADDING, pady=(UI_PADDING, 0))
 
         self._tooltip.set(self._DEFAULT_TOOLTIP)
-
-    def _set_tooltip_by_tree(self, event):
-        if not event or not isinstance(event.widget, ttk.Treeview):
-            return
-
-        cell = self._tree.get_cell_info(event)
-
-        if cell:
-            self._tooltip.set(RULE_COLUMNS[cell.column_name].description)
 
     def _setup_tooltip(self, widget, text: str, error: bool = False, leave: bool = True, enter: bool = True):
         if enter:
@@ -94,163 +85,94 @@ class RuleConfigurator(tk.Tk):
 
             widget.bind("<Leave>", on_leave)
 
-    def _setup_tooltip_cell_editor(self, _=None):
-        cell = self._tree.current_cell()
+    def _create_callback_for_set_tooltip_by_tree(self, rule_type: RuleType):
+        def callback(event):
+            if not event or not isinstance(event.widget, ttk.Treeview):
+                return
 
-        if cell:
-            self._setup_tooltip(
-                self._tree.popup(),
-                RULE_COLUMNS[cell.column_name].description,
-                leave=False
+            cell = self._tabs.current_list_of_tab().get_cell_info(event)
+
+            if cell:
+                self._tooltip.set(rule_type.clazz.model_fields[cell.column_name].description)
+
+        return callback
+
+    def _create_callback_for_setup_tooltip_cell_editor(self, rule_type: RuleType):
+        def callback(_=None):
+            lst = self._tabs.current_list_of_tab()
+            cell = lst.current_cell()
+
+            if cell:
+                self._setup_tooltip(
+                    lst.popup(),
+                    rule_type.clazz.model_fields[cell.column_name].description,
+                    leave=False
+                )
+
+        return callback
+
+    def _create_tabs(self):
+        self._tabs = tabs = RulesTabs(self)
+
+        tabs.pack(fill=tk.BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
+        tabs.load_data()
+
+        tabs.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_buttons_state(), "+")
+
+        for rt, lst in tabs.list_by_rt().items():
+            lst.bind("<Motion>", self._create_callback_for_set_tooltip_by_tree(rt), "+")
+            lst.bind(
+                EditableTreeviewEvents.START_EDIT_CELL,
+                self._create_callback_for_setup_tooltip_cell_editor(rt),
+                "+"
             )
 
-    def _create_treeview(self):
-        self._tree = tree = RulesList(self)
-
-        tree.bind("<<TreeviewSelect>>", self._update_buttons_state, "+")
-        tree.bind("<Control-Key>", self._on_key_press_tree, "+")
-        tree.bind("<Delete>", self._delete_selected, "+")
-        tree.bind("<Motion>", self._set_tooltip_by_tree, "+")
-        tree.bind(RulesListEvents.UNSAVED_CHANGES_STATE, self._update_buttons_state, "+")
-        tree.bind(EditableTreeviewEvents.START_EDIT_CELL, self._setup_tooltip_cell_editor, "+")
-
-        tree.pack(fill=tk.BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
-
-        tree.error_icon_created = lambda icon, tooltip: self._setup_tooltip(icon, tooltip, True, False)
-
-        self._setup_tooltip(tree, "", enter=False)
-
-    def _on_key_press_tree(self, event):
-        ctrl = (event.state & 0x4) != 0
-
-        if ctrl and event.keycode == ord('A'):
-            self._select_all(event)
+            lst.error_icon_created = lambda icon, tooltip: self._setup_tooltip(icon, tooltip, True, False)
+            self._setup_tooltip(lst, "", enter=False)
 
     def _create_buttons(self):
-        self._actions = actions = ActionsFrame(self)
-        actions.pack(fill=tk.X, padx=UI_PADDING, pady=(0, UI_PADDING))
-        actions.bind(ActionEvents.ADD, lambda _: self._add(), "+")
-        actions.bind(ActionEvents.DELETE, lambda _: self._delete_selected(), "+")
-        actions.bind(ActionEvents.UP, lambda _: self._move_item_up(), "+")
-        actions.bind(ActionEvents.DOWN, lambda _: self._move_item_down(), "+")
-        actions.bind(ActionEvents.SAVE, lambda _: self._save(), "+")
+        self._buttons = buttons = EditorButtons(self)
 
-        self._setup_tooltip(actions.add, "__Adds__ a rule after the current")
-        self._setup_tooltip(actions.delete, "__Deletes__ the selected rules")
-        self._setup_tooltip(actions.move_up, "__Moves__ the current rule __up__")
-        self._setup_tooltip(actions.move_down, "__Moves__ the current rule __down__")
-        self._setup_tooltip(actions.save, "__Saves__ the settings")
+        buttons.pack(fill=tk.X, padx=UI_PADDING, pady=(0, UI_PADDING))
+        buttons.bind(ActionEvents.SAVE, lambda _: self._tabs.save_data(), "+")
 
-        self._update_buttons_state()
+        self._setup_tooltip(buttons.save, "__Adds__ a rule after the current")
 
-    def _move_item_up(self):
-        selected_items = self._tree.selection()
-
-        if selected_items:
-            selected_item = selected_items[0]
-            index = self._tree.index(selected_item)
-
-            if index > 0:
-                self._tree.move(selected_item, '', index - 1)
-                self._tree.selection_set(selected_item)
-                self._update_buttons_state()
-
-    def _move_item_down(self):
-        selected_items = self._tree.selection()
-
-        if selected_items:
-            selected_item = selected_items[0]
-            index = self._tree.index(selected_item)
-            next_index = index + 1
-
-            if next_index < len(self._tree.get_children()):
-                self._tree.move(selected_item, '', next_index)
-                self._tree.selection_set(selected_item)
-                self._update_buttons_state()
-
-    def _save(self):
-        if not self._tree.save_data():
-            messagebox.showerror(f"Error Detected - {APP_NAME_WITH_VERSION}", "An error occurred while saving.")
-
-    def _add(self):
-        selected_items = self._tree.selection()
-
-        if selected_items:
-            selected_item = selected_items[0]
-            index = self._tree.index(selected_item)
-
-            self._tree.insert('', index + 1)
-            self._tree.selection_set(self._tree.get_children()[index + 1])
-        else:
-            self._tree.insert('', 'end')
+        for rt, btns in self._tabs.buttons_by_rt().items():
+            self._setup_tooltip(btns.add, "__Adds__ a rule after the current")
+            self._setup_tooltip(btns.delete, "__Deletes__ the selected rules")
+            self._setup_tooltip(btns.move_up, "__Moves__ the current rule __up__")
+            self._setup_tooltip(btns.move_down, "__Moves__ the current rule __down__")
 
         self._update_buttons_state()
-
-    def _delete_selected(self, _=None):
-        selected_items = self._tree.selection()
-
-        if selected_items:
-            index = self._tree.index(selected_items[0])
-
-            for item in selected_items:
-                self._tree.delete(item)
-
-            children = self._tree.get_children()
-
-            if len(children) <= index:
-                index -= 1
-
-            if children and len(children) > index:
-                self._tree.selection_set(children[index])
-
-        self._update_buttons_state()
-
-    def _select_all(self, _):
-        items = self._tree.get_children()
-
-        if items:
-            self._tree.selection_set(items)
-            self._update_buttons_state()
 
     def _on_window_closing(self):
-        if self._tree.unsaved_changes:
-            if self._tree.has_error():
-                message = "There are unsaved changes. Do you want to discard them and exit?"
+        if self._tabs.has_unsaved_changes():
+            if self._tabs.has_error():
+                message = ("There are errors in the rules, and they can't be saved. "
+                           "Do you want to DISCARD them and exit?")
                 result = messagebox.askyesno(f"{RC_TITLE} - {APP_NAME_WITH_VERSION}", message)
 
                 if not result:
                     return
             else:
-                message = "There are unsaved changes. Do you want to save them before exiting?"
+                message = ("There are unsaved changes. "
+                           "Do you want to save them before exiting?")
                 result = messagebox.askyesnocancel(f"{RC_TITLE} - {APP_NAME_WITH_VERSION}", message)
 
                 if result is None:
                     return
 
-                if result and not self._tree.save_data():
-                    messagebox.showerror(f"Error Detected - {APP_NAME_WITH_VERSION}", "An error occurred while saving.")
+                if result and not self._tabs.save_data():
                     return
 
         self.destroy()
 
     def _update_buttons_state(self, _=None):
-        tree = self._tree
-        actions = self._actions
-        selected_items = tree.selection()
+        tabs = self._tabs
+        buttons = self._buttons
 
-        if selected_items:
-            selected_item = selected_items[0]
-            index = tree.index(selected_item)
-            total_items = len(tree.get_children())
-
-            actions.move_up["state"] = tk.NORMAL if index > 0 else tk.DISABLED
-            actions.move_down["state"] = tk.NORMAL if index < total_items - 1 else tk.DISABLED
-        else:
-            actions.move_up["state"] = tk.DISABLED
-            actions.move_down["state"] = tk.DISABLED
-
-        actions.save["state"] = tk.NORMAL if tree.unsaved_changes and not tree.has_error() else tk.DISABLED
-        actions.delete["state"] = tk.NORMAL if selected_items else tk.DISABLED
+        buttons.save["state"] = tk.NORMAL if tabs.has_unsaved_changes() and not tabs.has_error() else tk.DISABLED
 
 
 is_editor_open = False
@@ -264,7 +186,7 @@ def open_rule_editor():
         try:
             is_editor_open = True
 
-            app = RuleConfigurator()
+            app = RulesConfigurator()
             app.mainloop()
         except:
             LOG.exception(f"An unexpected error occurred in the {RC_TITLE} of {APP_NAME}.")
@@ -290,5 +212,5 @@ def show_rule_editor_error_message():
 
 
 if __name__ == "__main__":
-    test_app = RuleConfigurator()
+    test_app = RulesConfigurator()
     test_app.mainloop()

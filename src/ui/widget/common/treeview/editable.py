@@ -1,4 +1,5 @@
 import tkinter as tk
+import traceback
 from dataclasses import dataclass
 from tkinter import ttk
 from typing import Optional, Literal, List
@@ -33,7 +34,7 @@ class CellEditor:
 
     def _setup_widgets(self, master, *args, **kwargs):
         def on_change(_):
-            self.event_generate(EditableTreeviewEvents._SAVE_CELL)
+            self.event_generate(EditableTreeviewEvents.SAVE_CELL)
 
         def on_escape(_):
             self.event_generate(EditableTreeviewEvents.ESCAPE)
@@ -41,6 +42,7 @@ class CellEditor:
         if self._cell.type == "text":
             entry_popup = ttk.Entry(master, *args, justify='center', **kwargs)
             entry_popup.insert(0, self._cell.value)
+            entry_popup.select_range(0, tk.END)
             entry_popup.bind("<FocusOut>", on_change, '+')
         else:
             entry_popup = ttk.Combobox(
@@ -140,7 +142,7 @@ class EditableTreeview(ScrollableTreeview):
         return self._popup
 
     def _on_dbl_click(self, event):
-        self._destroy_popup()
+        self._destroy_editor()
         self._cell = self.get_cell_info(event)
         self._create_editor()
 
@@ -150,8 +152,8 @@ class EditableTreeview(ScrollableTreeview):
 
         self._popup = entry_popup = CellEditor(self, self._cell)
 
-        entry_popup.bind(EditableTreeviewEvents._SAVE_CELL, self._save_and_destroy_popup, '+')
-        entry_popup.bind(EditableTreeviewEvents.ESCAPE, self._destroy_popup, '+')
+        entry_popup.bind(EditableTreeviewEvents.SAVE_CELL, self._save_and_destroy_popup, '+')
+        entry_popup.bind(EditableTreeviewEvents.ESCAPE, self._destroy_editor, '+')
         entry_popup.bind("<Destroy>", self._on_popup_destroy, '+')
 
         self._place_popup()
@@ -172,10 +174,12 @@ class EditableTreeview(ScrollableTreeview):
     def _save_and_destroy_popup(self, _=None):
         if self._popup:
             self._save_cell_changes()
-            self._destroy_popup()
+            self._destroy_editor()
 
-    def _destroy_popup(self, _=None):
+    def _destroy_editor(self, _=None):
         if self._popup:
+            print("sadfsdfasdfsd")
+            traceback.print_stack()
             self._popup.destroy()
 
     def _save_cell_changes(self):
@@ -189,6 +193,72 @@ class EditableTreeview(ScrollableTreeview):
         self._cell = None
 
     def edit_cell(self, row_id, column_id):
-        self._destroy_popup()
+        self._destroy_editor()
         self._cell = self._get_cell_info(row_id, column_id)
         self._create_editor()
+
+    def select_all_rows(self):
+        items = self.get_children()
+
+        if items:
+            self.selection_set(items)
+
+    def move_rows_up(self):
+        selected_items = self.selection()
+
+        if selected_items:
+            for selected_item in selected_items:
+                index = self.index(selected_item)
+                next_index = index - 1
+
+                if index <= 0:
+                    break
+
+                self.move(selected_item, '', next_index)
+
+            self.selection_set(selected_items)
+
+    def move_rows_down(self):
+        selected_items = self.selection()
+        count_items = len(self.get_children())
+
+        if selected_items:
+            for selected_item in reversed(selected_items):
+                index = self.index(selected_item)
+                next_index = index + 1
+
+                if next_index >= count_items:
+                    break
+
+                self.move(selected_item, '', next_index)
+
+            self.selection_set(selected_items)
+
+    def add_row(self, values=[]):
+        selected_items = self.selection()
+
+        if selected_items:
+            selected_item = selected_items[-1]
+            index = self.index(selected_item)
+
+            self.insert('', index + 1, values=values)
+            self.selection_set(self.get_children()[index + 1])
+        else:
+            self.insert('', tk.END, values=values)
+
+    def delete_selected_rows(self):
+        selected_items = self.selection()
+
+        if selected_items:
+            index = self.index(selected_items[0])
+
+            for item in selected_items:
+                self.delete(item)
+
+            children = self.get_children()
+
+            if len(children) <= index:
+                index -= 1
+
+            if children and len(children) > index:
+                self.selection_set(children[index])

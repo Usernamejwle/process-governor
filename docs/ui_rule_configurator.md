@@ -4,19 +4,19 @@
 
 ---
 
-## Opening the Rule Configurator
+## Opening the Rules Configurator
 
 1. Launch the **Process Governor**.
 2. Click on the application icon <u>in the system tray</u> to open the menu.
-3. Select the **Configure Rules** option to open the rule configurator.
+3. Select the **Configure Rules** option to open the rules configurator.
 
 ![tray_menu_screenshot.png](images/tray_menu_screenshot.png)
 
-## Interface of the Rule Configurator
+## Interface of the Rules Configurator
 
 ![rule_configurator_screenshot.png](images/rule_configurator_screenshot.png)
 
-The rule configurator interface is a table with several columns:
+The rules configurator interface is a table with several columns:
 
 - **Process Selector**: Specifies the process name or pattern to match.  
   You can use wildcards, including `*` and `?`, to match multiple processes.
@@ -75,14 +75,14 @@ The rule configurator interface is a table with several columns:
    changes.
 2. A confirmation message will appear upon successful save.
 
-### Closing the Rule Configurator
+### Closing the Rules Configurator
 
-1. To close the rule configurator, close the window in the usual way.
+1. To close the rules configurator, close the window in the usual way.
 2. If there are unsaved changes in the table, the program will offer to save them before closing.
 
 ### Tooltips
 
-- In the rule configurator interface, tooltips are present at the top, describing the functions of buttons and fields.
+- In the rules configurator interface, tooltips are present at the top, describing the functions of buttons and fields.
 - Hover over an interface element to view the tooltip.
 
 ### Error Handling

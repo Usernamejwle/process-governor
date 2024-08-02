@@ -3,7 +3,7 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from configuration.logs import Logs
-from configuration.rule import Rule
+from configuration.rule import ProcessRule, ServiceRule
 
 
 class Config(BaseModel):
@@ -25,7 +25,12 @@ class Config(BaseModel):
     Default settings are provided by the Logs class.
     """
 
-    rules: List[Rule] = Field(default_factory=list)
+    processRules: List[ProcessRule] = Field(default_factory=list)
     """
-    A list of Rule objects that specify how application manages processes and services based on user-defined rules.
+    A list of Rule objects that specify how application manages processes based on user-defined rules.
+    """
+
+    serviceRules: List[ServiceRule] = Field(default_factory=list)
+    """
+    A list of Rule objects that specify how application manages services based on user-defined rules.
     """

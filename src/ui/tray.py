@@ -9,6 +9,7 @@ from pystray._win32 import Icon
 from constants.any import CONFIG_FILE_NAME, LOG_FILE_NAME
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.resources import APP_ICON
+from constants.ui import RC_TRAY_TITLE
 from constants.updates import UPDATE_URL
 from ui.editor import open_rule_editor
 from util.messages import yesno_error_box, show_error, show_info
@@ -59,7 +60,7 @@ def init_tray() -> Icon:
         MenuItem(APP_NAME_WITH_VERSION, None, enabled=False),
         Menu.SEPARATOR,
 
-        MenuItem('Configure Rules', lambda item: open_rule_editor(), default=True),
+        MenuItem(RC_TRAY_TITLE, lambda item: open_rule_editor(), default=True),
         Menu.SEPARATOR,
 
         MenuItem('Open config file', lambda item: os.startfile(CONFIG_FILE_NAME)),

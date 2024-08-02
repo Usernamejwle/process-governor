@@ -1,17 +1,13 @@
 from typing import Final
 
-from pydantic.fields import FieldInfo
-
-from configuration.rule import Rule
-
-RULE_COLUMNS: dict[str, FieldInfo] = Rule.model_fields
-
-UI_PADDING = 15
+UI_PADDING = 12
+BUTTON_SIZE = 7
 ERROR_COLOR = "#e57373"
 ERROR_ROW_COLOR = "#ffcdd2"
 TOOLTIP_ICON_SIZE = 75
 RC_WIN_SIZE = (900, 600)
 RC_TITLE = "Rules Configurator"
+RC_TRAY_TITLE = f"Configure Rules"
 
 
 class ActionEvents:
@@ -19,6 +15,7 @@ class ActionEvents:
     DELETE: Final[str] = "<<Delete>>"
     UP: Final[str] = "<<Up>>"
     DOWN: Final[str] = "<<Down>>"
+    CANCEL: Final[str] = "<<Cancel>>"
     SAVE: Final[str] = "<<Save>>"
 
 
@@ -30,8 +27,7 @@ class EditableTreeviewEvents:
     CHANGE: Final[str] = "<<Change>>"
     ESCAPE: Final[str] = "<<Escape>>"
     START_EDIT_CELL: Final[str] = "<<StartEditCell>>"
-
-    _SAVE_CELL: Final[str] = "<<SaveCell>>"
+    SAVE_CELL: Final[str] = "<<SaveCell>>"
 
 
 class ScrollableTreeviewEvents:

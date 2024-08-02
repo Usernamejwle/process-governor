@@ -32,7 +32,7 @@ class Logs(BaseModel):
     backupCount: int = Field(default=1)
     """
     The number of backup log files to keep. When log rotation occurs, old log files beyond this count will be deleted.
-    Default is 2 backup log files.
+    Default is 1 backup log files.
     """
 
     def level_as_int(self):
