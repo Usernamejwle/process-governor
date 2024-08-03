@@ -6,7 +6,6 @@ from os.path import exists
 from typing import Optional, List, Any
 
 from configuration.config import Config
-from configuration.logs import Logs
 from configuration.rule import ProcessRule, ServiceRule
 from constants.files import CONFIG_FILE_NAME, CONFIG_FILE_ENCODING
 from enums.rules import RuleType
@@ -99,22 +98,6 @@ class ConfigService(ABC):
         with open(CONFIG_FILE_NAME, 'r', encoding=CONFIG_FILE_ENCODING) as file:
             json_data = json.load(file)
             return json_data.get(rule_type.field_in_config, [])
-
-    @classmethod
-    def load_logs(cls) -> Logs:
-        """
-        Loads the logging configuration from the configuration file.
-
-        Returns:
-            Logs: The logging configuration.
-        """
-        if not exists(CONFIG_FILE_NAME):
-            cls.save_config(config := Config())
-            return config.logging
-
-        with open(CONFIG_FILE_NAME, 'r', encoding=CONFIG_FILE_ENCODING) as file:
-            json_data = json.load(file)
-            return Logs(**json_data['logging'])
 
     @classmethod
     def save_rules(cls, rule_type: RuleType, rules: List[ProcessRule | ServiceRule]):

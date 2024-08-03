@@ -19,11 +19,11 @@ class Logs(BaseModel):
 
     level: Literal['CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'] = Field(default='INFO')
     """
-    The log level for filtering log messages. Default is 'WARN'.
+    The log level for filtering log messages. Default is 'INFO'.
     Valid log levels include: 'CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'.
     """
 
-    maxBytes: int = Field(default=1024)
+    maxBytes: int = Field(default=1024 * 1024)
     """
     The maximum size (in bytes) of the log file. When the log file exceeds this size, it will be rotated.
     Default is 1 megabyte (1024 * 1024 bytes).
