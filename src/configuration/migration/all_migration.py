@@ -7,14 +7,24 @@ from constants.log import LOG
 from service.config_service import ConfigService
 from util.messages import show_error
 
+MIGRATIONS: list[type[BaseMigration]] = [
+    MigrationRules2SplitRulesConfig
+]
+"""
+List of migration classes to be executed in order.
+"""
+
 
 def run_all_migration():
-    migrations: list[type[BaseMigration]] = [
-        MigrationRules2SplitRulesConfig
-    ]
+    """
+    Runs all necessary migrations on the configuration.
+    Creates a backup before migration, applies each migration in order,
+    logs progress, and saves the updated configuration if successful.
+    Shows an error and stops if any migration fails.
+    """
 
     config: dict = ConfigService.load_config_raw()
-    need_migrate = any(migration.should_migrate(config) for migration in migrations)
+    need_migrate = any(migration.should_migrate(config) for migration in MIGRATIONS)
 
     if not need_migrate:
         return
@@ -24,7 +34,7 @@ def run_all_migration():
 
     has_error = False
 
-    for migration in migrations:
+    for migration in MIGRATIONS:
         migration_name = migration.__name__
 
         try:
@@ -49,5 +59,3 @@ def run_all_migration():
 
     if not has_error:
         ConfigService.save_config_raw(config)
-
-
