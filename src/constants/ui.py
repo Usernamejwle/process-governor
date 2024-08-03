@@ -1,13 +1,12 @@
 from typing import Final
 
-UI_PADDING = 12
+UI_PADDING = 10
 BUTTON_SIZE = 7
 ERROR_COLOR = "#e57373"
 ERROR_ROW_COLOR = "#ffcdd2"
 TOOLTIP_ICON_SIZE = 75
 RC_WIN_SIZE = (900, 600)
 RC_TITLE = "Rules Configurator"
-RC_TRAY_TITLE = f"Configure Rules"
 
 
 class ActionEvents:

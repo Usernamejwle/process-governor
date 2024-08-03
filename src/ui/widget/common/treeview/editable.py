@@ -1,5 +1,4 @@
 import tkinter as tk
-import traceback
 from dataclasses import dataclass
 from tkinter import ttk
 from typing import Optional, Literal, List
@@ -178,8 +177,6 @@ class EditableTreeview(ScrollableTreeview):
 
     def _destroy_editor(self, _=None):
         if self._popup:
-            print("sadfsdfasdfsd")
-            traceback.print_stack()
             self._popup.destroy()
 
     def _save_cell_changes(self):
