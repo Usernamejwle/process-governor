@@ -3,6 +3,7 @@ import sys
 
 import psutil
 
+from constants.app_info import APP_PROCESSES
 from constants.files import LOCK_FILE_NAME
 
 
@@ -18,7 +19,8 @@ def is_process_running(pid):
     """
     try:
         process = psutil.Process(pid)
-        return process.is_running()
+        process_name = process.name()
+        return process.is_running() and process_name in APP_PROCESSES
     except psutil.NoSuchProcess:
         return False
 
