@@ -3,7 +3,7 @@ import sys
 
 import psutil
 
-from constants.any import LOCK_FILE_NAME
+from constants.files import LOCK_FILE_NAME
 
 
 def is_process_running(pid):

@@ -1,6 +1,6 @@
 import subprocess
 
-from constants.any import LOG
+from constants.log import LOG
 
 
 class TaskScheduler:

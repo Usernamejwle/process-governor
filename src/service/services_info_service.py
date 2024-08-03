@@ -5,7 +5,7 @@ import psutil
 from psutil import STATUS_STOPPED, NoSuchProcess, ZombieProcess, AccessDenied
 from psutil._pswindows import WindowsService
 
-from constants.any import LOG
+from constants.log import LOG
 from model.service import Service
 from util.decorators import suppress_exception
 

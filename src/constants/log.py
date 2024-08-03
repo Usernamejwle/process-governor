@@ -1,14 +1,14 @@
 import logging
 import sys
-from logging import StreamHandler
+from logging import StreamHandler, Logger
 from logging.handlers import RotatingFileHandler
+from typing import Final
 
 from configuration.logs import Logs
-from constants.any import LOG, LOG_FILE_NAME
-from service.config_service import ConfigService
+from constants.files import LOG_FILE_NAME
 
 
-def log_setup():
+def __log_setup() -> Logger:
     """
     Sets up the logging configuration.
 
@@ -16,25 +16,19 @@ def log_setup():
     accordingly. If the logging configuration is disabled, the function does nothing.
     """
 
+    log: Logger = logging.getLogger("proc-gov")
     log_cfg: Logs = Logs()
-    exception = None
 
-    try:
-        log_cfg = ConfigService.load_logs()
-    except BaseException as e:
-        exception = e
-        pass
-
-    LOG.setLevel(log_cfg.level_as_int())
+    log.setLevel(log_cfg.level_as_int())
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     console_handler = StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
-    LOG.addHandler(console_handler)
+    log.addHandler(console_handler)
 
     if not log_cfg.enable:
-        return
+        return log
 
     file_handler = RotatingFileHandler(
         LOG_FILE_NAME,
@@ -43,7 +37,9 @@ def log_setup():
         encoding='utf-8',
     )
     file_handler.setFormatter(formatter)
-    LOG.addHandler(file_handler)
+    log.addHandler(file_handler)
 
-    if exception:
-        raise exception
+    return log
+
+
+LOG: Final[logging.Logger] = __log_setup()

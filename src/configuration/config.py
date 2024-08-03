@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from configuration.logs import Logs
 from configuration.rule import ProcessRule, ServiceRule
 
 
@@ -13,16 +12,16 @@ class Config(BaseModel):
     It defines the structure of the configuration, including rule application interval, logging settings, and rules.
     """
 
+    version: Optional[int] = Field(default=None)
+    """
+    The version of the configuration.
+    This field can be None if the version is not set.
+    """
+
     ruleApplyIntervalSeconds: int = Field(default=1)
     """
     The time interval (in seconds) at which rules are applied to processes and services.
     Default is 1 second.
-    """
-
-    logging: Logs = Field(default_factory=Logs)
-    """
-    An instance of the Logs class that defines logging settings for application.
-    Default settings are provided by the Logs class.
     """
 
     processRules: List[ProcessRule] = Field(default_factory=list)

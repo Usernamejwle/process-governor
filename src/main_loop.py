@@ -8,14 +8,15 @@ from psutil._pswindows import Priority, IOPriority
 from pystray._win32 import Icon
 
 from configuration.config import Config
-from constants.any import LOG, LOG_FILE_NAME
+from configuration.migration.all_migration import run_all_migration
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.files import LOG_FILE_NAME
+from constants.log import LOG
 from constants.ui import RC_TITLE
 from service.config_service import ConfigService
 from service.rules_service import RulesService
 from ui.editor import open_rule_editor, is_editor_open
 from ui.tray import init_tray
-from util.logs import log_setup
 from util.messages import yesno_error_box, show_error
 from util.startup import update_startup
 
@@ -88,8 +89,8 @@ def start_app():
     tray: Optional[Icon] = None
 
     try:
+        run_all_migration()
         update_startup()
-        log_setup()
         priority_setup()
 
         tray: Icon = init_tray()

@@ -3,9 +3,9 @@ import threading
 from contextlib import suppress
 from functools import wraps
 from time import time
-from typing import Callable, Optional, Type, TypeVar
+from typing import Callable, Optional, TypeVar
 
-from constants.any import LOG
+from constants.log import LOG
 
 
 def run_in_thread(non_reentrant=True):

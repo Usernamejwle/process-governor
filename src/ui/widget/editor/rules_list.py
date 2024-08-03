@@ -9,7 +9,6 @@ from psutil._pswindows import Priority
 from pydantic import ValidationError, BaseModel
 
 from configuration.rule import ServiceRule, ProcessRule
-from constants.any import BOTH_SELECTORS_SET
 from constants.priority_mappings import str_to_priority, str_to_iopriority
 from constants.ui import ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
     ScrollableTreeviewEvents
@@ -150,12 +149,7 @@ class RulesList(EditableTreeview):
 
             if errors_by_columns:
                 for column_error in errors_by_columns:
-                    if column_error["type"] == BOTH_SELECTORS_SET:
-                        columns = ["processSelector", "serviceSelector"]
-                    else:
-                        columns = column_error["loc"]
-
-                    for column in columns:
+                    for column in column_error["loc"]:
                         self._place_icon(row_id, column, column_error)
 
     def _destroy_error_icons(self):

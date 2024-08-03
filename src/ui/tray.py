@@ -6,8 +6,8 @@ from PIL import Image
 from pystray import MenuItem, Menu
 from pystray._win32 import Icon
 
-from constants.any import CONFIG_FILE_NAME, LOG_FILE_NAME
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.files import CONFIG_FILE_NAME, LOG_FILE_NAME
 from constants.resources import APP_ICON
 from constants.ui import RC_TRAY_TITLE
 from constants.updates import UPDATE_URL

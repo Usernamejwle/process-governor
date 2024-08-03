@@ -15,3 +15,5 @@ if is_portable():
     APP_PATH: Final[str] = sys._MEIPASS
 else:
     APP_PATH: Final[str] = os.getcwd()
+
+STARTUP_TASK_NAME: Final[str] = f"{APP_NAME} Autostart"

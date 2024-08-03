@@ -3,8 +3,9 @@ import tkinter as tk
 from threading import Thread
 from tkinter import messagebox, ttk
 
-from constants.any import LOG, LOG_FILE_NAME
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.files import LOG_FILE_NAME
+from constants.log import LOG
 from constants.resources import APP_ICON
 from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, RC_TITLE, RulesListEvents, EditableTreeviewEvents
 from enums.rules import RuleType

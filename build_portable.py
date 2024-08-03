@@ -5,8 +5,8 @@ import shutil
 import PyInstaller.__main__
 import pyinstaller_versionfile
 
-from constants.any import CONFIG_FILE_NAME
 from constants.app_info import APP_NAME, APP_VERSION, APP_AUTHOR, APP_NAME_WITH_VERSION
+from constants.files import CONFIG_FILE_NAME
 
 # Setting paths and configuration parameters
 VERSION_FILE = "versionfile.txt"

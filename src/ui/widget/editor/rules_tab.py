@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, LEFT, messagebox
 
-from constants.any import LOG
 from constants.app_info import APP_NAME_WITH_VERSION
+from constants.log import LOG
 from constants.ui import UI_PADDING, ActionEvents, RulesListEvents
 from enums.rules import RuleType
 from service.config_service import ConfigService

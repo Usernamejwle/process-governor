@@ -8,7 +8,7 @@ from pyuac import isUserAdmin
 
 from configuration.config import Config
 from configuration.rule import ProcessRule, ServiceRule
-from constants.any import LOG
+from constants.log import LOG
 from constants.priority_mappings import iopriority_to_str, priority_to_str
 from enums.process import ProcessParameter
 from model.process import Process
