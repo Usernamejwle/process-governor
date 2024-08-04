@@ -1,7 +1,5 @@
 ![Logo Process Governor](images/github-banner-readme.png)
 
-[![RU](icons/ru.png) Русская версия](README.ru.md)
-
 ---
 
 **Process Governor** is a Python utility designed to manage Windows processes and services by adjusting their

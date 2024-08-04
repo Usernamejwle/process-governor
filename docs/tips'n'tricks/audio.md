@@ -2,7 +2,7 @@
 
 # Optimizing Audio using Process Governor
 
-[![README](../icons/readme.png) README](../README.md) | [![RU](../icons/ru.png) Русская версия](audio.ru.md)
+[![README](../icons/readme.png) README](../README.md)
 
 ---
 
@@ -209,15 +209,15 @@ Example of the enabled **Run on Startup** option:
 
 ### Creating Rules
 
-#### Opening the Rules Configurator
+#### Opening the Settings
 
 1. Launch **Process Governor** if it is not already running.
 2. Click on the application icon <u>in the system tray</u> to open the menu.
-3. Select the **Configure Rules** option to open the rules configurator.
+3. Select the **Settings** option to open the settings.
 
 #### Adding a Rule for process Voicemeeter
 
-1. In the rules configurator interface, press the **Add** button to add a new rule.
+1. In the Settings interface, press the **Add** button to add a new rule.
 2. Enter the corresponding values in the columns:
     - **Process Selector:** `voicemeeter8x64.exe`
     - **Priority:** `Realtime`
@@ -250,7 +250,7 @@ Similarly, add the remaining rules in accordance with the screenshot:
 
 ### Saving the Settings
 
-Once all the rules are configured, save them by pressing the **Save** button. Then you can close the rules configurator.
+Once all the rules are configured, save them by pressing the **Apply** button. Then you can close Settings.
 After that, the program will regularly apply the rules to the corresponding processes and manage PC resources.
 
 ## Conclusion

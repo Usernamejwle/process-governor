@@ -1,6 +1,6 @@
 # Configuration File
 
-[![README](icons/readme.png) README](README.md) | [![RU](icons/ru.png) Русская версия](configuration_file.ru.md)
+[![README](icons/readme.png) README](README.md)
 
 ---
 

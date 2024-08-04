@@ -1,22 +1,22 @@
 # Configuring Rules
 
-[![README](icons/readme.png) README](README.md) | [![RU](icons/ru.png) Русская версия](ui_rule_configurator.ru.md)
+[![README](icons/readme.png) README](README.md)
 
 ---
 
-## Opening the Rules Configurator
+## Opening the Settings
 
 1. Launch the **Process Governor**.
 2. Click on the application icon <u>in the system tray</u> to open the menu.
-3. Select the **Configure Rules** option to open the rules configurator.
+3. Select the **Settings** option to open the settings.
 
 ![tray_menu_screenshot.png](images/tray_menu_screenshot.png)
 
-## Interface of the Rules Configurator
+## Interface of the Settings
 
 ![rule_configurator_screenshot.png](images/rule_configurator_screenshot.png)
 
-The rules configurator interface is a table with several columns:
+The Settings interface is a table with several columns:
 
 - **Process Selector**: Specifies the process name or pattern to match.  
   You can use wildcards, including `*` and `?`, to match multiple processes.
@@ -71,18 +71,18 @@ The rules configurator interface is a table with several columns:
 
 ### Saving Changes
 
-1. After you have added, edited, or deleted rules, press the **Save** button at the bottom of the window to apply the
+1. After you have added, edited, or deleted rules, press the **Apply** button at the bottom of the window to apply the
    changes.
 2. A confirmation message will appear upon successful save.
 
-### Closing the Rules Configurator
+### Closing the Settings
 
-1. To close the rules configurator, close the window in the usual way.
+1. To close the Settings, close the window in the usual way.
 2. If there are unsaved changes in the table, the program will offer to save them before closing.
 
 ### Tooltips
 
-- In the rules configurator interface, tooltips are present at the top, describing the functions of buttons and fields.
+- In the Settings interface, tooltips are present at the top, describing the functions of buttons and fields.
 - Hover over an interface element to view the tooltip.
 
 ### Error Handling
@@ -90,6 +90,6 @@ The rules configurator interface is a table with several columns:
 - If the entered data is incorrect, the corresponding cell will be highlighted, and an error icon will appear next to
   it.
 - Hovering over the error icon will display a tooltip with the reason for the error.
-- If there are errors, the **Save** button and the option to save upon closing are not available.
+- If there are errors, the **Apply** button and the option to save upon closing are not available.
 
 ![rule_configurator_with_error_screenshot.png](images/rule_configurator_with_error_screenshot.png)
