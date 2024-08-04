@@ -117,9 +117,6 @@ class EditableTreeview(ScrollableTreeview):
         return self._get_cell_info(row_id, column_id)
 
     def _get_cell_info(self, row_id, column_id):
-        if not row_id or not column_id or column_id == "#0":
-            return None
-
         column_name = self.column(column_id)["id"]
         cell_value = self.set(row_id, column_id)
         values = self._values.get(column_name, [])
@@ -141,12 +138,11 @@ class EditableTreeview(ScrollableTreeview):
         return self._popup
 
     def _on_dbl_click(self, event):
-        self._destroy_editor()
-        self._cell = self.get_cell_info(event)
-        self._create_editor()
+        row_id, column_id = self.identify_row(event.y), self.identify_column(event.x)
+        self.edit_cell(row_id, column_id)
 
     def _create_editor(self):
-        if not self._cell:
+        if not self._cell.row_id or not self._cell.column_id or self._cell.column_id == "#0":
             return
 
         self._popup = entry_popup = CellEditor(self, self._cell)
