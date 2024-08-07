@@ -8,7 +8,6 @@ from typing import Optional, Any, List
 from psutil._pswindows import Priority
 from pydantic import ValidationError, BaseModel
 
-from configuration.rule import ServiceRule, ProcessRule
 from constants.priority_mappings import str_to_priority, str_to_iopriority
 from constants.ui import ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
     ScrollableTreeviewEvents
@@ -92,7 +91,7 @@ class RulesList(EditableTreeview):
 
         self._error_icon = icon16px("exclamation-triangle", ERROR_COLOR)
 
-    def set_raw_data(self, rules_raw: List[Any]):
+    def set_data(self, rules_raw: List[dict]):
         self.delete(*self.get_children())
         fields = self["columns"]
 
@@ -102,29 +101,36 @@ class RulesList(EditableTreeview):
 
         self.set_unsaved_changes(False)
 
-    def get_data(self) -> List[Optional[ProcessRule | ServiceRule | tuple[Any, Any]]]:
-        return self._to_rules()
+    def get_data(self) -> List[dict]:
+        return [self._to_rule_raw(row_id) for row_id in self.get_children()]
 
-    def _to_rule(self, row_id) -> ProcessRule | ServiceRule | tuple[Any, Any]:
+    def _to_rule_raw(self, row_id):
         keys = self["columns"]
         values = self.item(row_id, 'values')
-        dct = {
+        return {
             key: value for key, value in zip(keys, values)
             if value and value.strip()
         }
 
+    def get_error_if_available(self, row_id) -> Optional[tuple[Any, Any]]:
         try:
             # noinspection PyCallingNonCallable
-            return self._model(**dct)
+            self._model(**self._to_rule_raw(row_id))
+            return None
         except ValidationError as e:
             return row_id, json.loads(e.json())
 
-    def _to_rules(self) -> List[Optional[ProcessRule | ServiceRule | tuple[Any, Any]]]:
-        return [self._to_rule(row_id) for row_id in self.get_children()]
-
     def _errors(self) -> dict[Any, Any]:
-        return {rule[0]: rule[1] for rule in self._to_rules() if
-                rule and not isinstance(rule, (ProcessRule, ServiceRule))}
+        errors = [
+            self.get_error_if_available(row_id)
+            for row_id in self.get_children()
+        ]
+
+        return {
+            error[0]: error[1]
+            for error in errors
+            if error is not None
+        }
 
     def has_error(self):
         return len(self._errors()) > 0

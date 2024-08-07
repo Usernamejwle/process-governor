@@ -1,5 +1,5 @@
 import tkinter
-from tkinter import font, Widget
+from tkinter import font, Widget, PhotoImage
 from tkinter.ttk import Treeview
 
 from tkfontawesome import icon_to_image
@@ -42,5 +42,5 @@ def get_label_font():
     return default_font
 
 
-def icon16px(name: str, fill: str = None):
+def icon16px(name: str, fill: str = None) -> PhotoImage:
     return icon_to_image(name, fill=fill, scale_to_width=16)

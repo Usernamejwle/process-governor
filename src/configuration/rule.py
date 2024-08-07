@@ -10,7 +10,7 @@ from configuration.handler.priority import PriorityStr
 class ProcessRule(BaseModel):
     selector: str = Field(
         title="Process Selector",
-        description="Specifies the __name or pattern__ of the __process__ to which this rule applies.\n\n"
+        description="Specifies the **name** or **pattern** of the __process__ to which this rule applies.\n\n"
                     "**Supports wildcards:** `\*` (matches any characters) and `?` (matches any single character).\n"
                     "**Examples:** `name.exe` or `logioptionsplus_*.exe`.",
         default_ui="*",
@@ -44,7 +44,7 @@ class ProcessRule(BaseModel):
 class ServiceRule(BaseModel):
     selector: str = Field(
         title="Service Selector",
-        description="Specifies the __name or pattern__ of the __service__ to which this rule applies.\n\n"
+        description="Specifies the **name** or **pattern** of the __service__ to which this rule applies.\n\n"
                     "**Supports wildcards:** `\*` (matches any characters) and `?` (matches any single character).\n"
                     "**Examples:** `ServiceName` or `Audio*`.",
         default_ui="*",

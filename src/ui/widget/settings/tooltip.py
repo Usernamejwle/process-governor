@@ -8,7 +8,7 @@ from ui.widget.common.label import RichLabel, Image
 
 
 class Tooltip(ttk.Frame):
-    def __init__(self, master=None, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs):
         text = kwargs.pop("text", "")
 
         super().__init__(master, *args, **kwargs)

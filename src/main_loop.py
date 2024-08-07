@@ -12,10 +12,10 @@ from configuration.migration.all_migration import run_all_migration
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
-from constants.ui import RC_TITLE
+from constants.ui import SETTINGS_TITLE
 from service.config_service import ConfigService
 from service.rules_service import RulesService
-from ui.editor import open_rule_editor, is_editor_open
+from ui.settings import open_settings, is_settings_open
 from ui.tray import init_tray
 from util.messages import yesno_error_box, show_error
 from util.startup import update_startup
@@ -109,13 +109,13 @@ def show_rules_error_message():
     title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     message = "An error has occurred while loading or applying the rules.\n"
 
-    if is_editor_open:
+    if is_settings_open:
         message += "Please check the correctness of the rules."
         show_error(title, message)
     else:
-        message += f"Would you like to open the {RC_TITLE} to review and correct the rules?"
+        message += f"Would you like to open the {SETTINGS_TITLE} to review and correct the rules?"
         if yesno_error_box(title, message):
-            open_rule_editor()
+            open_settings()
 
 
 def show_abstract_error_message(will_closed: bool):

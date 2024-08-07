@@ -20,6 +20,8 @@ class ScrollableTreeview(ttk.Treeview):
         self._scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         super().pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
+        self.bind("<<TreeviewSelect>>", self.__on_select)
+
     def on_scroll(self):
         pass
 
@@ -52,3 +54,7 @@ class ScrollableTreeview(ttk.Treeview):
     def _on_scrollbar_mouse(self, first, last):
         self._scrollbar.set(first, last)
         self.event_generate(ScrollableTreeviewEvents.SCROLL)
+
+    def __on_select(self, _):
+        for item in self.selection():
+            self.see(item)
