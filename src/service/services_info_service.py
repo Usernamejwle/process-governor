@@ -1,5 +1,4 @@
 from abc import ABC
-from typing import Optional
 
 import psutil
 from psutil import STATUS_STOPPED, NoSuchProcess, ZombieProcess, AccessDenied
@@ -58,18 +57,3 @@ class ServicesInfoService(ABC):
                 LOG.warning(f"No such service: {service.name}")
 
         return result
-
-    @classmethod
-    def get_by_pid(cls, pid: int, dct: dict[int, Service]) -> Optional[Service]:
-        """
-        Get a Service object by its process ID (pid) from the provided dictionary.
-
-        Args:
-            pid (int): The process ID (pid) of the service to retrieve.
-            dct (dict[int, Service]): A dictionary of services where keys are process IDs (pids) and values are
-            Service objects.
-
-        Returns:
-            Optional[Service]: The Service object if found, or None if not found.
-        """
-        return dct.get(pid)

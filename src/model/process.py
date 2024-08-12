@@ -19,9 +19,14 @@ class Process:
     The unique identifier of the process (Process ID).
     """
 
-    exe: str
+    binpath: str
     """
-    The name of the executable file associated with the process.
+    The full path to the executable binary of the process.
+    """
+
+    cmdline: str
+    """
+    The command line used to start the process, including all arguments.
     """
 
     name: str

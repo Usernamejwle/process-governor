@@ -5,10 +5,8 @@ from tkinter import ttk
 from tkinter.font import Font
 from typing import Optional, Any, List
 
-from psutil._pswindows import Priority
 from pydantic import ValidationError, BaseModel
 
-from constants.priority_mappings import str_to_priority, str_to_iopriority
 from constants.ui import ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
     ScrollableTreeviewEvents
 from ui.widget.common.label import Image
@@ -60,7 +58,7 @@ class RulesList(EditableTreeview):
                     values.append("")
 
                 if issubclass(typ, enum.Enum):
-                    values += list(str_to_priority.keys() if typ == Priority else str_to_iopriority.keys())
+                    values += [str(e.value) for e in typ]
                     max_width_value_in_column = max(values + [max_width_value_in_column], key=len)
 
                     self.column_type(column_name, "list")
@@ -73,13 +71,14 @@ class RulesList(EditableTreeview):
             stretch = extra.get('stretchable_column_ui', False)
             width = extra.get(
                 'width_ui',
-                int(self.font.measure(max_width_value_in_column) * 1.5)
+                int(self.font.measure(max_width_value_in_column) * 1.35)
                 if title else None
             )
             width = width * extra.get('scale_width_ui', 1) if width else None
+            anchor = {"left": "w", "center": "center", "right": "e"}[extra.get('justify_ui', 'center')]
 
             self.heading(column_name, text=title)
-            self.column(column_name, anchor='center', width=width, minwidth=width, stretch=stretch)
+            self.column(column_name, anchor=anchor, width=width, minwidth=width, stretch=stretch)
 
     def _setup_look(self):
         self.font = Font(family="TkDefaultFont")

@@ -1,27 +1,68 @@
+import re
 import sys
-from fnmatch import fnmatch
 from functools import lru_cache
+from re import Pattern
 from types import NoneType
-from typing import get_origin, get_args, Union, Annotated
+from typing import get_origin, get_args, Union, Annotated, Optional
+
+
+@lru_cache(maxsize=None)
+def path_pattern_to_regex(pattern: str) -> Optional[Pattern]:
+    """
+    Converts a glob-like path pattern to a regular expression, with partial support for glob syntax.
+
+    Args:
+        pattern (str): The path pattern to convert.
+
+    Returns:
+        re.Pattern: The compiled regular expression.
+
+    Supports:
+        - "*" matches any sequence of characters except the path separator.
+        - "?" matches any single character except the path separator.
+        - "**/" matches any number of nested directories.
+    """
+
+    pattern = pattern.strip()
+
+    if not pattern:
+        return None
+
+    pattern = re.escape(pattern.replace('\\', '/'))
+    pattern = pattern.replace(r'/', '[/]')
+    pattern = pattern.replace('\\*\\*[/]', '(.*[/])?')
+    pattern = pattern.replace('\\?', '[^/]')
+    pattern = pattern.replace('\\*', '[^/]*')
+    pattern = pattern.replace('/', r'\\/')
+
+    return re.compile(f"^{pattern}$")
 
 
 @lru_cache
-def fnmatch_cached(name: str, pattern: str) -> bool:
+def path_match(pattern: str, value: str) -> bool:
     """
-    Check if a name matches a pattern using fnmatch, with caching.
+    Checks if any of the provided values match the given pattern.
 
     Args:
-        name (str): The name to check.
-        pattern (str): The pattern to match against.
+        pattern (str): The pattern to match against, supporting wildcards.
+        *values (str): The values to test against the pattern.
 
     Returns:
-        bool: True if the name matches the pattern, False otherwise.
+        bool: True if any value matches the pattern, False otherwise.
     """
 
-    if pattern:
-        pattern = pattern.strip()
+    if pattern == value:
+        return True
 
-    return pattern and fnmatch(name, pattern)
+    if not pattern:
+        return False
+
+    regex = path_pattern_to_regex(pattern)
+
+    if not pattern:
+        return False
+
+    return regex.match(value) is not None
 
 
 def is_portable():

@@ -9,6 +9,11 @@ from util.ui import full_visible_bbox
 
 ColumnType = Literal["text", "list"]
 
+_justify_mapping = {
+    "w": "left",
+    "e": "right",
+    "center": "center"
+}
 
 @dataclass(frozen=True)
 class CellInfo:
@@ -28,6 +33,7 @@ class CellEditor:
             *args,
             **kwargs
     ):
+        self._master = master
         self._cell = cell_info
         self._input = self._setup_widgets(master, *args, **kwargs)
 
@@ -38,8 +44,11 @@ class CellEditor:
         def on_escape(_):
             self.event_generate(EditableTreeviewEvents.ESCAPE)
 
+        column_settings = self._master.column(self._cell.column_id)
+        justify = _justify_mapping[column_settings.get('anchor', 'center')]
+
         if self._cell.type == "text":
-            entry_popup = ttk.Entry(master, *args, justify='center', **kwargs)
+            entry_popup = ttk.Entry(master, *args, justify=justify, **kwargs)
             entry_popup.insert(0, self._cell.value)
             entry_popup.select_range(0, tk.END)
             entry_popup.bind("<FocusOut>", on_change, '+')
@@ -48,7 +57,7 @@ class CellEditor:
                 master,
                 *args,
                 values=self._cell.values,
-                justify='center',
+                justify=justify,
                 state="readonly",
                 **kwargs
             )

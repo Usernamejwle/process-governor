@@ -13,10 +13,16 @@ class ProcessesInfoService(ABC):
     It is an abstract base class (ABC) to be subclassed by specific implementation classes.
     """
 
+    __prev_pids: Set[int] = []
+
     @classmethod
-    def get_list(cls) -> dict[int, Process]:
+    def get_list(cls, only_new: bool = False) -> dict[int, Process]:
         """
         Get a dictionary of running processes and their information.
+
+        Args:
+            only_new (bool): If True, return only the newly created processes since the last check.
+                             If False, return all running processes.
 
         Returns:
             dict[int, Process]: A dictionary where keys are process IDs (pids) and values are Process objects
@@ -26,12 +32,18 @@ class ProcessesInfoService(ABC):
         current_pids: List[int] = psutil.pids()
 
         for pid in current_pids:
+            if only_new and pid in cls.__prev_pids:
+                continue
+
             try:
                 process = psutil.Process(pid)
-                info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity'])
+                info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity', 'cmdline'])
+                cmdline = ' '.join(process for process in info['cmdline'] or [''] if process)
+
                 result[pid] = Process(
                     pid,
                     info['exe'],
+                    cmdline,
                     info['name'],
                     int(info['nice']) if info['nice'] else None,
                     int(info['ionice']) if info['ionice'] else None,
@@ -40,40 +52,6 @@ class ProcessesInfoService(ABC):
                 )
             except NoSuchProcess:
                 pass
-
-        cls.__prev_pids = set(current_pids)
-        return result
-
-    __prev_pids: Set[int] = []
-
-    @classmethod
-    def get_new_processes(cls) -> dict[int, Process]:
-        """
-        Get a dictionary of newly created processes since the last check.
-
-        Returns:
-            dict[int, Process]: A dictionary where keys are process IDs (pids) and values are Process objects
-            representing the newly created processes.
-        """
-        result: dict[int, Process] = {}
-        current_pids: List[int] = psutil.pids()
-
-        for pid in current_pids:
-            if pid not in cls.__prev_pids:
-                try:
-                    process = psutil.Process(pid)
-                    info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity'])
-                    result[pid] = Process(
-                        pid,
-                        info['exe'],
-                        info['name'],
-                        int(info['nice']) if info['nice'] else None,
-                        int(info['ionice']) if info['ionice'] else None,
-                        info['cpu_affinity'],
-                        process
-                    )
-                except NoSuchProcess:
-                    pass
 
         cls.__prev_pids = set(current_pids)
         return result

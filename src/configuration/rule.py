@@ -3,18 +3,30 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from configuration.handler.affinity import Affinity
-from configuration.handler.io_priority import IOPriorityStr
-from configuration.handler.priority import PriorityStr
+from enums.io_priority import IOPriorityStr
+from enums.priority import PriorityStr
+from enums.selector import SelectorType
 
 
 class ProcessRule(BaseModel):
+    selectorBy: SelectorType = Field(
+        title="Selector By",
+        description="Determines how the __Process Selector__ value is interpreted, influencing how the __process__ is matched.\n"
+                    "**Options:**\n"
+                    " - `Name` - matches by process name (e.g., `notepad.exe`);\n"
+                    " - `Path` - matches by the full executable path (e.g., `C:/Windows/System32/notepad.exe`);\n"
+                    " - `Command line` - matches by command line arguments (e.g., `App.exe Document.txt` or `D:/Folder/App.exe Document.txt`).",
+        default_ui=SelectorType.NAME.value
+    )
+
     selector: str = Field(
-        title="Process Selector",
-        description="Specifies the **name** or **pattern** of the __process__ to which this rule applies.\n\n"
-                    "**Supports wildcards:** `\*` (matches any characters) and `?` (matches any single character).\n"
-                    "**Examples:** `name.exe` or `logioptionsplus_*.exe`.",
+        title="Selector",
+        description="Specifies the **name**, **pattern** or **path** of the __process__ to which this rule applies.\n\n"
+                    "**Supports wildcard:** `\*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
+                    "**Examples:** `name.exe`, `logioptionsplus_*.exe`, `D:/FolderName/App.exe` or `C:/Program Files/**/app.exe --file Document.txt`.",
         default_ui="*",
-        stretchable_column_ui=True
+        stretchable_column_ui=True,
+        justify_ui="left"
     )
 
     priority: Optional[PriorityStr] = Field(
@@ -34,21 +46,32 @@ class ProcessRule(BaseModel):
     affinity: Optional[Affinity] = Field(
         default=None,
         title="Affinity",
-        description="Sets the **CPU core affinity** for the __process__, "
-                    "defining which CPU cores are allowed for execution.\n\n"
+        description="Sets the **CPU core affinity** for the __process__, defining which CPU cores are allowed for execution.\n\n"
                     "**Format:** range `0-3`, specific cores `0;2;4`, combination `1;3-5`.",
-        scale_width_ui=3
+        scale_width_ui=3,
+        justify_ui="left"
     )
 
 
 class ServiceRule(BaseModel):
+    selectorBy: SelectorType = Field(
+        title="Selector By",
+        description="Determines how the __Service Selector__ value is interpreted, influencing how the __service__ is matched.\n"
+                    "**Options:**\n"
+                    " - `Name` - matches by service name (e.g., `Spooler`);\n"
+                    " - `Path` - matches by the full executable path (e.g., `C:/Windows/System32/spoolsv.exe`);\n"
+                    " - `Command line` - matches by command line arguments (e.g., `spoolsv.exe -k` or `C:/Windows/System32/spoolsv.exe -k`).",
+        default_ui=SelectorType.NAME.value
+    )
+
     selector: str = Field(
-        title="Service Selector",
-        description="Specifies the **name** or **pattern** of the __service__ to which this rule applies.\n\n"
-                    "**Supports wildcards:** `\*` (matches any characters) and `?` (matches any single character).\n"
-                    "**Examples:** `ServiceName` or `Audio*`.",
+        title="Selector",
+        description="Specifies the **name**, **pattern** or **path** of the __service__ to which this rule applies.\n\n"
+                    "**Supports wildcard:** `\*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
+                    "**Examples:** `ServiceName`, `Audio*`, `D:/FolderName/Service.exe` or `C:/Windows/System32/**/service.exe --debug 1`.",
         default_ui="*",
-        stretchable_column_ui=True
+        stretchable_column_ui=True,
+        justify_ui="left"
     )
 
     priority: Optional[PriorityStr] = Field(
@@ -68,8 +91,8 @@ class ServiceRule(BaseModel):
     affinity: Optional[Affinity] = Field(
         default=None,
         title="Affinity",
-        description="Sets the **CPU core affinity** for the __service__, "
-                    "defining which CPU cores are allowed for execution.\n\n"
+        description="Sets the **CPU core affinity** for the __service__, defining which CPU cores are allowed for execution.\n\n"
                     "**Format:** range `0-3`, specific cores `0;2;4`, combination `1;3-5`.",
-        scale_width_ui=3
+        scale_width_ui=3,
+        justify_ui="left"
     )

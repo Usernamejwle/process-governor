@@ -104,8 +104,10 @@ class Settings(tk.Tk):
         self._update_buttons_state()
 
     def _on_window_closing(self):
+        has_error = self._tabs.has_error()
+
         if self._tabs.has_unsaved_changes():
-            if self._tabs.has_error():
+            if has_error:
                 message = ("There are errors in the rules, and they can't be saved. "
                            "Do you want to DISCARD them and exit?")
                 result = messagebox.askyesno(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}", message)
@@ -121,6 +123,15 @@ class Settings(tk.Tk):
                     return
 
                 if result and not self._tabs.save_data():
+                    return
+        else:
+            if has_error:
+                message = (
+                    f"There are errors in the rules, and they must be corrected before the application can work properly. "
+                    f"Do you still want to close the {SETTINGS_TITLE}?")
+                result = messagebox.askyesno(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}", message)
+
+                if not result:
                     return
 
         self.destroy()

@@ -9,15 +9,17 @@ from pyuac import isUserAdmin
 from configuration.config import Config
 from configuration.rule import ProcessRule, ServiceRule
 from constants.log import LOG
-from constants.priority_mappings import iopriority_to_str, priority_to_str
+from enums.io_priority import to_iopriority
+from enums.priority import to_priority
 from enums.process import ProcessParameter
+from enums.selector import SelectorType
 from model.process import Process
 from model.service import Service
 from service.processes_info_service import ProcessesInfoService
 from service.services_info_service import ServicesInfoService
 from util.cpu import format_affinity
 from util.decorators import cached
-from util.utils import fnmatch_cached
+from util.utils import path_match
 
 
 class RulesService(ABC):
@@ -54,7 +56,7 @@ class RulesService(ABC):
             LOG.info("Configuration file has been modified. Reloading all rules to apply changes.")
             processes = ProcessesInfoService.get_list()
         else:
-            processes = ProcessesInfoService.get_new_processes()
+            processes = ProcessesInfoService.get_list(True)
 
         cls.__handle_processes(config, processes, services)
 
@@ -65,7 +67,7 @@ class RulesService(ABC):
                 continue
 
             try:
-                service_info: Service = ServicesInfoService.get_by_pid(pid, services)
+                service_info: Service = services.get(pid)
                 rule: Optional[ProcessRule | ServiceRule] = cls.__first_rule_by_name(config, service_info, process_info)
 
                 if not rule:
@@ -102,9 +104,9 @@ class RulesService(ABC):
         parameter = ProcessParameter.IONICE
 
         try:
-            process_info.process.ionice(rule.ioPriority)
-            LOG.info(
-                f"Set {parameter.value} {iopriority_to_str[rule.ioPriority]} for {process_info.name} ({process_info.pid})")
+            io_priority = to_iopriority[rule.ioPriority]
+            process_info.process.ionice(io_priority)
+            LOG.info(f"Set {parameter.value} {rule.ioPriority.value} for {process_info.name} ({process_info.pid})")
         except AccessDenied:
             not_success.append(parameter)
 
@@ -116,9 +118,9 @@ class RulesService(ABC):
         parameter = ProcessParameter.NICE
 
         try:
-            process_info.process.nice(rule.priority)
-            LOG.info(
-                f"Set {parameter.value} {priority_to_str[rule.priority]} for {process_info.name} ({process_info.pid})")
+            priority = to_priority[rule.priority]
+            process_info.process.nice(priority)
+            LOG.info( f"Set {parameter.value} {rule.priority.value} for {process_info.name} ({process_info.pid})")
         except AccessDenied:
             not_success.append(parameter)
 
@@ -147,13 +149,27 @@ class RulesService(ABC):
             process: Process
     ) -> Optional[ProcessRule | ServiceRule]:
         if service:
-            for rule in config.serviceRules:
-                if fnmatch_cached(service.name, rule.selector):
-                    return rule
+            for serviceRule in config.serviceRules:
+                value = service.name
 
-        for rule in config.processRules:
-            if fnmatch_cached(process.name, rule.selector):
-                return rule
+                if serviceRule.selectorBy == SelectorType.PATH:
+                    value = service.binpath
+                elif serviceRule.selectorBy == SelectorType.CMDLINE:
+                    value = process.cmdline
+
+                if path_match(serviceRule.selector, value):
+                    return serviceRule
+
+        for processRule in config.processRules:
+            value = process.name
+
+            if processRule.selectorBy == SelectorType.PATH:
+                value = process.binpath
+            elif processRule.selectorBy == SelectorType.CMDLINE:
+                value = process.cmdline
+
+            if path_match(processRule.selector, value):
+                return processRule
 
         return None
 

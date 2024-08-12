@@ -17,7 +17,7 @@ class Logs(BaseModel):
     A boolean flag to enable or disable logging. Default is True (logging is enabled).
     """
 
-    level: Literal['CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'] = Field(default='INFO')
+    level: Literal['CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'] = Field(default='DEBUG')
     """
     The log level for filtering log messages. Default is 'INFO'.
     Valid log levels include: 'CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'.

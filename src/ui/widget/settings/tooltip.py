@@ -22,7 +22,7 @@ class Tooltip(ttk.Frame):
         )
         self._image.pack(side=tk.LEFT, fill=tk.Y, padx=(0, UI_PADDING))
 
-        label = RichLabel(self, height=4.25, textvariable=self._text)
+        label = RichLabel(self, height=5.25, textvariable=self._text)
         label.pack(expand=True, fill=tk.BOTH)
         label.pack_propagate(False)
 
