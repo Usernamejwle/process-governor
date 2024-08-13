@@ -55,7 +55,11 @@ def main_loop(tray: Icon):
     while thread.is_alive():
         try:
             config, is_changed = ConfigService.reload_if_changed(config)
-            RulesService.apply_rules(config, is_changed)
+
+            if is_changed:
+                LOG.info("Configuration file has been modified. Reloading all rules to apply changes.")
+
+            RulesService.apply_rules(config, not is_changed)
             last_error_message = None
         except KeyboardInterrupt as e:
             raise e

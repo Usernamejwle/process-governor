@@ -1,6 +1,7 @@
 import enum
 import json
 import tkinter as tk
+from enum import Enum
 from tkinter import ttk
 from tkinter.font import Font
 from typing import Optional, Any, List
@@ -227,9 +228,12 @@ class RulesList(EditableTreeview):
 
         for column_name in self["columns"]:
             field_info = model_fields.get(column_name)
-            extra = field_info.json_schema_extra or dict() if field_info else dict()
-            default_value = extra.get('default_ui', '')
-            result.append(default_value)
+            default_value = field_info.default
+
+            if isinstance(default_value, Enum):
+                default_value = default_value.value
+
+            result.append(default_value or '')
 
         return result
 

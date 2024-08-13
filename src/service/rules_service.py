@@ -9,14 +9,13 @@ from pyuac import isUserAdmin
 from configuration.config import Config
 from configuration.rule import ProcessRule, ServiceRule
 from constants.log import LOG
+from enums.bool import BoolStr
 from enums.io_priority import to_iopriority
 from enums.priority import to_priority
 from enums.process import ProcessParameter
 from enums.selector import SelectorType
 from model.process import Process
-from model.service import Service
 from service.processes_info_service import ProcessesInfoService
-from service.services_info_service import ServicesInfoService
 from util.cpu import format_affinity
 from util.decorators import cached
 from util.utils import path_match
@@ -30,16 +29,16 @@ class RulesService(ABC):
 
     __ignore_pids: set[int] = {0, os.getpid()}
     __ignored_process_parameters: dict[tuple[int, str], set[ProcessParameter]] = {}
+    __force_pids: set[int] = set()
 
     @classmethod
-    def apply_rules(cls, config: Config, force=False):
+    def apply_rules(cls, config: Config, only_new: bool):
         """
         Apply the rules defined in the configuration to handle processes and services.
 
         Args:
             config (Config): The configuration object containing the rules.
-            force (bool, optional): If set to True, all processes will be fetched,
-                                    regardless of their status. Defaults to False.
+            only_new (bool, optional): If set to True, all processes will be fetched, regardless of their status.
 
         Returns:
             None
@@ -48,96 +47,94 @@ class RulesService(ABC):
             return
 
         cls.__light_gc_ignored_process_parameters()
-
-        services: dict[int, Service] = ServicesInfoService.get_list()
-        processes: dict[int, Process]
-
-        if force:
-            LOG.info("Configuration file has been modified. Reloading all rules to apply changes.")
-            processes = ProcessesInfoService.get_list()
-        else:
-            processes = ProcessesInfoService.get_list(True)
-
-        cls.__handle_processes(config, processes, services)
+        cls.__force_pids = cls.__handle_processes(
+            config,
+            ProcessesInfoService.get_list(only_new, cls.__force_pids)
+        )
 
     @classmethod
-    def __handle_processes(cls, config: Config, processes: dict[int, Process], services: dict[int, Service]):
-        for pid, process_info in processes.items():
+    def __handle_processes(cls, config: Config, processes: dict[int, Process]) -> set[int]:
+        force_pids: set[int] = set()
+
+        for pid, process in processes.items():
             if pid in cls.__ignore_pids:
                 continue
 
             try:
-                service_info: Service = services.get(pid)
-                rule: Optional[ProcessRule | ServiceRule] = cls.__first_rule_by_name(config, service_info, process_info)
+                rule: Optional[ProcessRule | ServiceRule] = cls.__first_rule_by_name(config, process)
 
                 if not rule:
                     continue
 
-                tuple_pid_name = (pid, process_info.name)
+                if rule.force == BoolStr.YES:
+                    force_pids.add(pid)
+
+                tuple_pid_name = (pid, process.name)
                 ignored_process_parameters = cls.__ignored_process_parameters.get(tuple_pid_name, set())
                 not_success: List[ProcessParameter] = []
 
                 if ProcessParameter.AFFINITY not in ignored_process_parameters:
-                    cls.__set_affinity(not_success, process_info, rule)
+                    cls.__set_affinity(not_success, process, rule)
 
                 if ProcessParameter.NICE not in ignored_process_parameters:
-                    cls.__set_nice(not_success, process_info, rule)
+                    cls.__set_nice(not_success, process, rule)
 
                 if ProcessParameter.IONICE not in ignored_process_parameters:
-                    cls.__set_ionice(not_success, process_info, rule)
+                    cls.__set_ionice(not_success, process, rule)
 
                 if not_success:
                     cls.__ignore_process_parameter(tuple_pid_name, set(not_success))
 
                     LOG.warning(f"Set failed [{', '.join(map(str, not_success))}] "
-                                f"for {process_info.name} ({process_info.pid}"
-                                f"{', ' + service_info.name + '' if service_info else ''}"
+                                f"for {process.name} ({process.pid}"
+                                f"{', ' + process.service.name + '' if process.service else ''}"
                                 f")")
             except NoSuchProcess:
                 LOG.warning(f"No such process: {pid}")
 
+        return force_pids
+
     @classmethod
-    def __set_ionice(cls, not_success, process_info, rule: ProcessRule | ServiceRule):
-        if not rule.ioPriority or process_info.ionice == rule.ioPriority:
+    def __set_ionice(cls, not_success, process: Process, rule: ProcessRule | ServiceRule):
+        io_priority = to_iopriority[rule.ioPriority]
+
+        if not io_priority or process.ionice == io_priority:
             return
 
         parameter = ProcessParameter.IONICE
 
         try:
-            io_priority = to_iopriority[rule.ioPriority]
-            process_info.process.ionice(io_priority)
-            LOG.info(f"Set {parameter.value} {rule.ioPriority.value} for {process_info.name} ({process_info.pid})")
+            process.process.ionice(io_priority)
+            LOG.info(f"Set {parameter.value} {rule.ioPriority.value} for {process.name} ({process.pid})")
         except AccessDenied:
             not_success.append(parameter)
 
     @classmethod
-    def __set_nice(cls, not_success, process_info, rule: ProcessRule | ServiceRule):
-        if not rule.priority or process_info.nice == rule.priority:
+    def __set_nice(cls, not_success, process: Process, rule: ProcessRule | ServiceRule):
+        priority = to_priority[rule.priority]
+
+        if not priority or process.nice == priority:
             return
 
         parameter = ProcessParameter.NICE
 
         try:
-            priority = to_priority[rule.priority]
-            process_info.process.nice(priority)
-            LOG.info( f"Set {parameter.value} {rule.priority.value} for {process_info.name} ({process_info.pid})")
+            process.process.nice(priority)
+            LOG.info(f"Set {parameter.value} {rule.priority.value} for {process.name} ({process.pid})")
         except AccessDenied:
             not_success.append(parameter)
 
     @classmethod
-    def __set_affinity(cls, not_success, process_info: Process, rule: ProcessRule | ServiceRule):
-        if not rule.affinity:
+    def __set_affinity(cls, not_success, process: Process, rule: ProcessRule | ServiceRule):
+        if not rule.affinity or process.affinity == rule.affinity:
             return
 
         parameter = ProcessParameter.AFFINITY
 
-        if process_info.affinity == rule.affinity:
-            return
-
         try:
-            process_info.process.cpu_affinity(rule.affinity)
-            LOG.info(
-                f"Set {parameter.value} {format_affinity(rule.affinity)} for {process_info.name} ({process_info.pid})")
+            process.process.cpu_affinity(rule.affinity)
+            affinity = format_affinity(rule.affinity)
+            LOG.info(f"Set {parameter.value} {affinity} for {process.name} ({process.pid})")
         except AccessDenied:
             not_success.append(parameter)
 
@@ -145,9 +142,10 @@ class RulesService(ABC):
     def __first_rule_by_name(
             cls,
             config: Config,
-            service: Service,
             process: Process
     ) -> Optional[ProcessRule | ServiceRule]:
+        service = process.service
+
         if service:
             for serviceRule in config.serviceRules:
                 value = service.name

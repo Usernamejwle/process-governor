@@ -3,7 +3,7 @@ from typing import Optional
 from configuration.migration.base import BaseMigration
 
 
-class NewFieldSelectorBy(BaseMigration):
+class NewFieldsInRule(BaseMigration):
     @staticmethod
     def get_target_version() -> int:
         return 2
@@ -16,5 +16,6 @@ class NewFieldSelectorBy(BaseMigration):
     def migrate(config: dict) -> Optional[dict]:
         for rule in config.get('processRules', []) + config.get('serviceRules', []):
             rule['selectorBy'] = 'Name'
+            rule['force'] = 'N'
 
         return config

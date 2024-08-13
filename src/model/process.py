@@ -4,6 +4,8 @@ from typing import List, Optional
 import psutil
 from psutil._pswindows import Priority, IOPriority
 
+from model.service import Service
+
 
 @dataclass
 class Process:
@@ -52,4 +54,10 @@ class Process:
     process: psutil.Process
     """
     The psutil.Process object associated with the process, providing access to additional process information and control.
+    """
+
+    service: Optional[Service]
+    """
+    Contains information about the service if the current process is associated with one.
+    If the process is not related to a service, this will be None.
     """
