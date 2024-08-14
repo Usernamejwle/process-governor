@@ -59,7 +59,7 @@ class RulesList(EditableTreeview):
                     values.append("")
 
                 if issubclass(typ, enum.Enum):
-                    values += [str(e.value) for e in typ]
+                    values += [str(e) for e in typ]
                     max_width_value_in_column = max(values + [max_width_value_in_column], key=len)
 
                     self.column_type(column_name, "list")
@@ -231,7 +231,7 @@ class RulesList(EditableTreeview):
             default_value = field_info.default
 
             if isinstance(default_value, Enum):
-                default_value = default_value.value
+                default_value = str(default_value)
 
             result.append(default_value or '')
 

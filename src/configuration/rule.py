@@ -62,6 +62,16 @@ class ProcessRule(BaseModel):
                     "- `N` for one-time application.",
     )
 
+    delay: Optional[int] = Field(
+        gt=0,
+        default=0,
+        title="Delay",
+        description="Specifies the delay in seconds before the settings are applied to the __process__.\n\n"
+                    "**Possible values:**\n"
+                    "- If not specified, the settings are applied immediately;\n"
+                    "- Positive values set a delay in seconds before applying the settings."
+    )
+
 
 class ServiceRule(BaseModel):
     selectorBy: SelectorType = Field(
@@ -114,4 +124,14 @@ class ServiceRule(BaseModel):
                     "**Possible values:**\n"
                     "- `Y` for continuous application;\n"
                     "- `N` for one-time application.",
+    )
+
+    delay: Optional[int] = Field(
+        gt=0,
+        default=0,
+        title="Delay",
+        description="Specifies the delay in seconds before the settings are applied to the __service__.\n\n"
+                    "**Possible values:**\n"
+                    "- If not specified, the settings are applied immediately;\n"
+                    "- Positive values set a delay in seconds before applying the settings."
     )

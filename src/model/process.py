@@ -61,3 +61,12 @@ class Process:
     Contains information about the service if the current process is associated with one.
     If the process is not related to a service, this will be None.
     """
+
+    def __hash__(self):
+        return hash((self.pid, self.binpath, self.name, self.cmdline))
+
+    def __eq__(self, other):
+        if isinstance(other, Process):
+            return ((self.pid, self.binpath, self.name, self.cmdline) ==
+                    (other.pid, other.binpath, other.name, other.cmdline))
+        return False

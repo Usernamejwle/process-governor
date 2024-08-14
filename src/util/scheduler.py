@@ -1,64 +1,34 @@
-import subprocess
-
-from constants.log import LOG
+import threading
 
 
 class TaskScheduler:
-    """
-    A class to manage tasks in Windows Task Scheduler using the schtasks utility.
-    """
+    def __init__(self):
+        self.tasks = {}
 
-    @staticmethod
-    def create_startup_task(task_name, exe_path):
-        """
-        Creates a startup task in the Task Scheduler.
-
-        Parameters:
-            task_name (str): The name of the task to be created.
-            exe_path (str): The path of the executable to be run as the startup task.
-        """
-        command = f"schtasks /create /tn \"{task_name}\" /tr \"{exe_path}\" /sc onlogon /rl highest"
-
+    def _execute_task(self, key, callback, *args, **kwargs):
         try:
-            subprocess.run(command, check=True, shell=True)
-            LOG.info(f"Task '{task_name}' created successfully.")
-        except subprocess.CalledProcessError:
-            LOG.exception(f"Error creating task '{task_name}'. Command: {command}")
-            raise
+            callback(*args, **kwargs)
+        finally:
+            del self.tasks[key]
 
-    @staticmethod
-    def check_task(task_name):
-        """
-        Checks for the existence of a task in the Task Scheduler.
+    def schedule_task(self, key, callback, delay=0, *args, **kwargs):
+        if key not in self.tasks:
+            self.tasks[key] = threading.Timer(delay, self._execute_task, args=(key, callback) + args, kwargs=kwargs)
+            self.tasks[key].start()
 
-        Parameters:
-            task_name (str): Name of the task.
 
-        Returns:
-            bool: True if the task exists, False otherwise.
-        """
-        command = f"schtasks /query /tn \"{task_name}\""
+if __name__ == '__main__':
+    def my_function(message):
+        print(f"Function executed with message: {message}")
 
-        try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True)
-            return task_name in result.stdout
-        except subprocess.CalledProcessError:
-            LOG.exception(f"Error checking task '{task_name}'. Command: {command}")
-            raise
 
-    @staticmethod
-    def delete_task(task_name):
-        """
-        Deletes a task from the Task Scheduler.
+    scheduler = TaskScheduler()
 
-        Parameters:
-            task_name (str): Name of the task.
-        """
-        command = f"schtasks /delete /tn \"{task_name}\" /f"
+    scheduler.schedule_task("task1", my_function, 5, "Hello after 5 seconds")
+    scheduler.schedule_task("task1", my_function, 2, "Hello after 2 seconds")
+    scheduler.schedule_task("task2", my_function, 3, "Hello after 3 seconds")
+    scheduler.schedule_task("task3", my_function, 0, "Immediate execution")
 
-        try:
-            subprocess.run(command, check=True, shell=True)
-            LOG.info(f"Task '{task_name}' deleted successfully.")
-        except subprocess.CalledProcessError:
-            LOG.exception(f"Error deleting task '{task_name}'. Command: {command}")
-            raise
+    import time
+
+    time.sleep(10)

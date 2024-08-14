@@ -4,13 +4,16 @@ from typing import Final
 from psutil._pswindows import Priority
 
 
-class PriorityStr(Enum):
+class PriorityStr(str, Enum):
     IDLE = 'Idle'
     BELOW_NORMAL = 'BelowNormal'
     NORMAL = 'Normal'
     ABOVE_NORMAL = 'AboveNormal'
     HIGH = 'High'
     REALTIME = 'Realtime'
+
+    def __str__(self):
+        return str(self.value)
 
 
 to_priority: Final[dict[PriorityStr, Priority]] = {

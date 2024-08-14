@@ -1,11 +1,13 @@
 import logging
 import sys
-from logging import StreamHandler, Logger
+from logging import StreamHandler, Logger, WARNING
 from logging.handlers import RotatingFileHandler
 from typing import Final
 
 from configuration.logs import Logs
 from constants.files import LOG_FILE_NAME
+
+logging.addLevelName(WARNING, 'WARN')
 
 
 def __log_setup() -> Logger:

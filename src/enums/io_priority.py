@@ -4,11 +4,14 @@ from typing import Final
 from psutil._pswindows import IOPriority
 
 
-class IOPriorityStr(Enum):
+class IOPriorityStr(str, Enum):
     VERYLOW = 'VeryLow'
     LOW = 'Low'
     NORMAL = 'Normal'
     HIGH = 'High'
+
+    def __str__(self):
+        return str(self.value)
 
 
 to_iopriority: Final[dict[IOPriorityStr, IOPriority]] = {
