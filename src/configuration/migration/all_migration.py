@@ -3,6 +3,7 @@ import copy
 from configuration.migration.base import BaseMigration
 from configuration.migration.m0_rules_to_split_rules_config import MigrationRules2SplitRulesConfig
 from configuration.migration.m1_new_fields_in_rule import NewFieldsInRule
+from configuration.migration.m2_remove_high_io_priority import RemoveHighIoPriority
 from constants.app_info import APP_NAME_WITH_VERSION
 from constants.log import LOG
 from service.config_service import ConfigService
@@ -10,7 +11,8 @@ from util.messages import show_error
 
 MIGRATIONS: list[type[BaseMigration]] = [
     MigrationRules2SplitRulesConfig,
-    NewFieldsInRule
+    NewFieldsInRule,
+    RemoveHighIoPriority
 ]
 """
 List of migration classes to be executed in order.
