@@ -35,7 +35,7 @@ def path_pattern_to_regex(pattern: str) -> Optional[Pattern]:
     pattern = pattern.replace('\\*', '[^/]*')
     pattern = pattern.replace('/', r'\\/')
 
-    return re.compile(f"^{pattern}$")
+    return re.compile(f"^{pattern}$", re.IGNORECASE)
 
 
 @lru_cache
