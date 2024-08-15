@@ -21,10 +21,9 @@ class ProcessRule(BaseModel):
     )
 
     selector: str = Field(
-        default="*",
         title="Selector",
         description="Specifies the **name**, **pattern** or **path** of the __process__ to which this rule applies.\n\n"
-                    "**Supports wildcard:** `\*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
+                    "**Supports wildcard:** `*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
                     "**Examples:** `name.exe`, `logioptionsplus_*.exe`, `D:/FolderName/App.exe` or `C:/Program Files/**/app.exe --file Document.txt`.",
         stretchable_column_ui=True,
         justify_ui="left"
@@ -85,10 +84,9 @@ class ServiceRule(BaseModel):
     )
 
     selector: str = Field(
-        default="*",
         title="Selector",
         description="Specifies the **name**, **pattern** or **path** of the __service__ to which this rule applies.\n\n"
-                    "**Supports wildcard:** `\*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
+                    "**Supports wildcard:** `*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
                     "**Examples:** `ServiceName`, `Audio*`, `D:/FolderName/Service.exe` or `C:/Windows/System32/**/service.exe --debug 1`.",
         stretchable_column_ui=True,
         justify_ui="left"
