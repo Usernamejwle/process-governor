@@ -2,8 +2,6 @@ import tkinter
 from tkinter import font, Widget, PhotoImage
 from tkinter.ttk import Treeview
 
-from tkfontawesome import icon_to_image
-
 
 def state(widget: Widget) -> str:
     return str(widget["state"])

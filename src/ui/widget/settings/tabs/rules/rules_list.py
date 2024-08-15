@@ -2,17 +2,18 @@ import enum
 import json
 import tkinter as tk
 from enum import Enum
-from tkinter import ttk
+from tkinter import ttk, PhotoImage
 from tkinter.font import Font
 from typing import Optional, Any, List
 
 from pydantic import ValidationError, BaseModel
 
-from constants.ui import ERROR_COLOR, ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
+from constants.resources import UI_ERROR
+from constants.ui import ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
     ScrollableTreeviewEvents
 from ui.widget.common.label import Image
 from ui.widget.common.treeview.editable import EditableTreeview
-from util.ui import icon16px, full_visible_bbox
+from util.ui import full_visible_bbox
 from util.utils import extract_type, is_optional_type
 
 
@@ -89,7 +90,7 @@ class RulesList(EditableTreeview):
         style = ttk.Style()
         style.configure('Treeview', rowheight=row_height)
 
-        self._error_icon = icon16px("exclamation-triangle", ERROR_COLOR)
+        self._error_icon = PhotoImage(file=UI_ERROR)
 
     def set_data(self, rules_raw: List[dict]):
         self.delete(*self.get_children())

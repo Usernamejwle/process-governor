@@ -1,14 +1,14 @@
 import tkinter as tk
 from abc import ABC
-from tkinter import ttk
+from tkinter import ttk, PhotoImage
 from tkinter.ttk import Notebook
 
+from constants.resources import UI_ADD, UI_DELETE, UI_UP, UI_DOWN
 from constants.ui import UI_PADDING, RulesListEvents, ActionEvents
 from enums.rules import RuleType
 from ui.widget.common.button import IconedButton
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.rules.rules_list import RulesList
-from util.ui import icon16px
 
 
 class BaseRulesTab(BaseTab, ABC):
@@ -91,28 +91,28 @@ class RulesTabButtons(ttk.Frame):
             self,
             text=" Add",
             command=lambda: self.event_generate(ActionEvents.ADD),
-            image=icon16px("plus", fill="green")
+            image=PhotoImage(file=UI_ADD)
         )
 
         self.delete = delete = IconedButton(
             self,
             text=" Del",
             command=lambda: self.event_generate(ActionEvents.DELETE),
-            image=icon16px("trash-alt", fill="firebrick")
+            image=PhotoImage(file=UI_DELETE)
         )
 
         self.move_up = move_up = IconedButton(
             self,
             text=" Up",
             command=lambda: self.event_generate(ActionEvents.UP),
-            image=icon16px("arrow-up", fill="#1a1a1a")
+            image=PhotoImage(file=UI_UP)
         )
 
         self.move_down = move_down = IconedButton(
             self,
             text=" Down",
             command=lambda: self.event_generate(ActionEvents.DOWN),
-            image=icon16px("arrow-down", fill="#1a1a1a")
+            image=PhotoImage(file=UI_DOWN)
         )
 
         left_btn_pack = dict(side=tk.LEFT, padx=(0, UI_PADDING))

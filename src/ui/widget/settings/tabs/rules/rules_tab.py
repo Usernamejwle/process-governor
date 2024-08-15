@@ -1,9 +1,9 @@
 from tkinter import PhotoImage
 from tkinter.ttk import Notebook
 
+from constants.resources import UI_PROCESS_RULES, UI_SERVICE_RULES
 from enums.rules import RuleType
 from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
-from util.ui import icon16px
 
 
 class ProcessRulesTab(BaseRulesTab):
@@ -12,7 +12,7 @@ class ProcessRulesTab(BaseRulesTab):
 
     @staticmethod
     def icon() -> PhotoImage:
-        return icon16px("list", fill="#3F888F")
+        return PhotoImage(file=UI_PROCESS_RULES)
 
     @staticmethod
     def title() -> str:
@@ -29,7 +29,7 @@ class ServiceRulesTab(BaseRulesTab):
 
     @staticmethod
     def icon() -> PhotoImage:
-        return icon16px("cogs", fill="#6495ED")
+        return PhotoImage(file=UI_SERVICE_RULES)
 
     @staticmethod
     def title() -> str:

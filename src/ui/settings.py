@@ -3,17 +3,18 @@ import tkinter as tk
 from threading import Thread
 from tkinter import messagebox, ttk
 
+from PIL.ImageTk import PhotoImage
+
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
-from constants.resources import APP_ICON
+from constants.resources import APP_ICON, UI_SAVE
 from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, RulesListEvents, EditableTreeviewEvents
 from ui.widget.common.button import IconedButton
 from ui.widget.settings.settings_tabs import SettingsTabs
 from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
 from ui.widget.settings.tooltip import Tooltip
 from util.messages import yesno_error_box
-from util.ui import icon16px
 
 
 class SettingsButtons(ttk.Frame):
@@ -26,7 +27,7 @@ class SettingsButtons(ttk.Frame):
             self,
             text=" Apply",
             command=lambda: self.event_generate(ActionEvents.SAVE),
-            image=icon16px("check", fill="cornflowerblue")
+            image=PhotoImage(file=UI_SAVE)
         )
         right_btn_pack = dict(side=tk.RIGHT, padx=(UI_PADDING, 0))
         save.pack(**right_btn_pack)
@@ -150,6 +151,9 @@ class Settings(tk.Tk):
         tabs.bind("<Leave>", lambda _: self._tooltip.set(self._DEFAULT_TOOLTIP), "+")
 
         for tab in tabs.frames():
+            if not isinstance(tab, BaseRulesTab):
+                continue
+
             btns = tab.buttons
             self._setup_tooltip(btns.add, "__Adds__ a rule after the current")
             self._setup_tooltip(btns.delete, "__Deletes__ the selected rules")

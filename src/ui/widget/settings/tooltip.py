@@ -1,9 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, StringVar
+from tkinter import ttk, StringVar, PhotoImage
 
-from tkfontawesome import icon_to_image
-
-from constants.ui import UI_PADDING, ERROR_COLOR, TOOLTIP_ICON_SIZE
+from constants.resources import UI_INFO_TOOLTIP, UI_WARN_TOOLTIP
+from constants.ui import UI_PADDING
 from ui.widget.common.label import RichLabel, Image
 
 
@@ -13,8 +12,8 @@ class Tooltip(ttk.Frame):
 
         super().__init__(master, *args, **kwargs)
         self._text = StringVar(self, value=text)
-        self._info_icon = icon_to_image("info-circle", fill="cornflowerblue", scale_to_width=TOOLTIP_ICON_SIZE)
-        self._error_icon = icon_to_image("exclamation-triangle", fill=ERROR_COLOR, scale_to_width=TOOLTIP_ICON_SIZE)
+        self._info_icon = PhotoImage(file=UI_INFO_TOOLTIP)
+        self._error_icon = PhotoImage(file=UI_WARN_TOOLTIP)
 
         self._image = Image(
             self,

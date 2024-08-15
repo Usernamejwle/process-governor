@@ -2,9 +2,7 @@ from typing import Final
 
 UI_PADDING = 10
 BUTTON_SIZE = 7
-ERROR_COLOR = "#e57373"
 ERROR_ROW_COLOR = "#ffcdd2"
-TOOLTIP_ICON_SIZE = 75
 RC_WIN_SIZE = (1280, 768)
 SETTINGS_TITLE = "Settings"
 
