@@ -1,3 +1,4 @@
+import shlex
 from abc import ABC
 from typing import List, Set
 
@@ -40,7 +41,7 @@ class ProcessesInfoService(ABC):
             try:
                 process = psutil.Process(pid)
                 info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity', 'cmdline'])
-                cmdline = ' '.join(process for process in info['cmdline'] or [''] if process)
+                cmdline = shlex.join(info['cmdline'] or [])
 
                 result[pid] = Process(
                     pid,
