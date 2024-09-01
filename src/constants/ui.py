@@ -15,8 +15,8 @@ SETTINGS_TITLE = "Settings"
 OPEN_CONFIG_LABEL = "Open config file"
 OPEN_LOG_LABEL = "Open log file"
 
-ADD_PROCESS_RULE_LABEL = " Add Process Rule"
-ADD_SERVICE_RULE_LABEL = " Add Service Rule"
+CMENU_ADD_PROCESS_RULE_LABEL = " Add Process Rule"
+CMENU_ADD_SERVICE_RULE_LABEL = " Add Service Rule"
 
 
 class ActionEvents:
@@ -34,12 +34,11 @@ class ActionEvents:
     SEARCH_CHANGE: Final[str] = "<<SearchChange>>"
 
 
-class RulesListEvents:
-    UNSAVED_CHANGES_STATE: Final[str] = "<<UnsavedChangesState>>"
+class ExtendedTreeviewEvents:
+    CHANGE: Final[str] = "<<Change>>"
 
 
 class EditableTreeviewEvents:
-    CHANGE: Final[str] = "<<Change>>"
     ESCAPE: Final[str] = "<<Escape>>"
     START_EDIT_CELL: Final[str] = "<<StartEditCell>>"
     SAVE_CELL: Final[str] = "<<SaveCell>>"

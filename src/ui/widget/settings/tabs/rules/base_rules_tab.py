@@ -3,7 +3,7 @@ from tkinter import ttk, X, BOTH, NORMAL, DISABLED
 from tkinter.ttk import Notebook
 
 from constants.resources import UI_ADD, UI_DELETE, UI_UP, UI_DOWN
-from constants.ui import UI_PADDING, RulesListEvents, ActionEvents, LEFT_PACK
+from constants.ui import UI_PADDING, ActionEvents, LEFT_PACK, ExtendedTreeviewEvents
 from enums.rules import RuleType
 from ui.widget.common.button import ExtendedButton
 from ui.widget.settings.tabs.base_tab import BaseTab
@@ -39,7 +39,9 @@ class BaseRulesTab(BaseTab, ABC):
         rules_list = RulesList(self.rule_type.clazz, self)
 
         rules_list.bind("<<TreeviewSelect>>", lambda _: self._update_actions_state(), "+")
-        rules_list.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_actions_state(), "+")
+        rules_list.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_actions_state(), "+")
+        rules_list.bind(ExtendedTreeviewEvents.CHANGE,
+                        lambda _: self.master.event_generate(ExtendedTreeviewEvents.CHANGE), "+")
 
         return rules_list
 
@@ -73,18 +75,16 @@ class BaseRulesTab(BaseTab, ABC):
 
         actions.delete["state"] = NORMAL if selected_items else DISABLED
 
-        self.master.event_generate(RulesListEvents.UNSAVED_CHANGES_STATE)
-
     def load_from_config(self, config: dict):
         self.rules_list.set_data(config.get(self.rule_type.field_in_config, []))
 
     def save_to_config(self, config: dict):
         rules_list = self.rules_list
         config[self.rule_type.field_in_config] = rules_list.get_data()
-        rules_list.set_unsaved_changes(False)
+        self.rules_list.commit_changes()
 
-    def has_unsaved_changes(self) -> bool:
-        return self.rules_list.has_unsaved_changes
+    def has_changes(self) -> bool:
+        return self.rules_list.has_changes()
 
     def has_error(self) -> bool:
         return self.rules_list.has_error()

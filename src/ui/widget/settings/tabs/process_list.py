@@ -6,7 +6,8 @@ from typing import Optional
 from constants.log import LOG
 from constants.resources import UI_PROCESS_LIST, UI_REFRESH
 from constants.threads import THREAD_PROCESS_LIST
-from constants.ui import UI_PADDING, ActionEvents, LEFT_PACK, ADD_PROCESS_RULE_LABEL, ADD_SERVICE_RULE_LABEL
+from constants.ui import UI_PADDING, ActionEvents, LEFT_PACK, CMENU_ADD_PROCESS_RULE_LABEL, \
+    CMENU_ADD_SERVICE_RULE_LABEL
 from enums.filters import FilterByProcessType
 from enums.rules import RuleType
 from enums.selector import SelectorType
@@ -146,7 +147,6 @@ class ProcessListTab(BaseTab):
         try:
             actions = self.actions
             actions.refresh['state'] = DISABLED if lock else NORMAL
-            actions.filterByType['state'] = DISABLED if lock else "readonly"
 
             progress_bar = self._progress_bar
             if lock:
@@ -160,7 +160,7 @@ class ProcessListTab(BaseTab):
     def save_to_config(self, config: dict):
         pass
 
-    def has_unsaved_changes(self) -> bool:
+    def has_changes(self) -> bool:
         return False
 
     def has_error(self) -> bool:
@@ -182,14 +182,12 @@ class ProcessListTab(BaseTab):
         self._process_menu = Menu(context_menu, tearoff=0)
 
         context_menu.add_cascade(
-            label=ADD_PROCESS_RULE_LABEL,
-            menu=self._process_menu,
-            compound=LEFT
+            label=CMENU_ADD_PROCESS_RULE_LABEL,
+            menu=self._process_menu
         )
 
         context_menu.add_command(
-            label=ADD_SERVICE_RULE_LABEL,
-            compound=LEFT,
+            label=CMENU_ADD_SERVICE_RULE_LABEL,
             command=lambda: self._add_rule(RuleType.SERVICE)
         )
 
@@ -236,8 +234,8 @@ class ProcessListTab(BaseTab):
                     command=lambda: self._add_rule(RuleType.PROCESS, SelectorType.CMDLINE)
                 )
 
-            self._context_menu.entryconfig(ADD_PROCESS_RULE_LABEL, state=NORMAL if exists else DISABLED)
-            self._context_menu.entryconfig(ADD_SERVICE_RULE_LABEL, state=NORMAL if row.service else DISABLED)
+            self._context_menu.entryconfig(CMENU_ADD_PROCESS_RULE_LABEL, state=NORMAL if exists else DISABLED)
+            self._context_menu.entryconfig(CMENU_ADD_SERVICE_RULE_LABEL, state=NORMAL if row.service else DISABLED)
 
             context_menu.post(event.x_root, event.y_root)
 
@@ -272,7 +270,7 @@ class ProcessListTab(BaseTab):
             elif selector_type == SelectorType.CMDLINE:
                 rule_row['selector'] = row['cmd_line']
 
-        rules_list.add_row([*rule_row.values()])
+        rules_list.add_row([*rule_row.values()], index=0)
 
 
 class ProcessListTabActions(ttk.Frame):

@@ -6,8 +6,8 @@ from constants.files import LOG_FILE_NAME
 from constants.log import LOG
 from constants.resources import APP_ICON, UI_SAVE, UI_LOG, UI_CONFIG
 from constants.threads import THREAD_SETTINGS
-from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, RulesListEvents, EditableTreeviewEvents, \
-    RIGHT_PACK, LEFT_PACK, OPEN_CONFIG_LABEL, OPEN_LOG_LABEL
+from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, EditableTreeviewEvents, \
+    RIGHT_PACK, LEFT_PACK, OPEN_CONFIG_LABEL, OPEN_LOG_LABEL, ExtendedTreeviewEvents
 from ui.widget.common.button import ExtendedButton
 from ui.widget.settings.settings_tabs import SettingsTabs
 from ui.widget.settings.tabs.base_tab import BaseTab
@@ -81,7 +81,7 @@ class Settings(Tk):
     def _create_tabs(self):
         self._tabs = tabs = SettingsTabs(self)
         tabs.load_data()
-        tabs.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_actions_state(), "+")
+        tabs.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_actions_state(), "+")
 
     def _create_actions(self):
         self._actions = actions = SettingsActions(self)

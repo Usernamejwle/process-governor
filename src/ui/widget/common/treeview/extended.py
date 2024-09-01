@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from tkinter import ttk
+from tkinter import ttk, END
 from typing import Optional, Literal, Any
 
 from pydantic.config import JsonDict
 
-from constants.ui import COLUMN_TITLE_PADDING
+from constants.ui import COLUMN_TITLE_PADDING, ExtendedTreeviewEvents
 from util.ui import get_default_font
 from util.utils import get_values_from_enum
 
@@ -28,6 +28,9 @@ class ExtendedTreeview(ttk.Treeview):
         self._font = get_default_font()
         self._types: dict[str, type] = {}
         self._width_set: dict[str, bool] = {}
+
+        self._generate_event_change: bool = True
+        self._changed: tuple = tuple()
 
         self._setup_font()
         self.bind('<Configure>', self._calculate_columns_width, '+')
@@ -139,9 +142,15 @@ class ExtendedTreeview(ttk.Treeview):
 
         return result
 
+    def as_list(self, row_id):
+        return self.item(row_id, 'values')
+
+    def as_list_of_list(self) -> list[list[str]]:
+        return [self.as_list(row_id) for row_id in self.get_children()]
+
     def as_dict(self, row_id) -> JsonDict:
         column_names = self["columns"]
-        values = self.item(row_id, 'values')
+        values = self.as_list(row_id)
 
         return {
             key: value for key, value in zip(column_names, values)
@@ -150,3 +159,52 @@ class ExtendedTreeview(ttk.Treeview):
 
     def as_list_of_dict(self) -> list[JsonDict]:
         return [self.as_dict(row_id) for row_id in self.get_children()]
+
+    def begin_changes(self):
+        if not self._generate_event_change:
+            raise RuntimeError("Has already been called begin_changes")
+
+        self._changed = []
+        self._generate_event_change = False
+
+    def end_changes(self):
+        if self._generate_event_change:
+            raise RuntimeError("begin_changes must be called before end_changes")
+
+        self._generate_event_change = True
+
+        if self._changed:
+            sequence, args, kwargs = self._changed
+            self._changed = []
+
+            super().event_generate(sequence, *args, **kwargs)
+
+    def event_generate(self, sequence, *args, **kwargs):
+        if not self._generate_event_change and sequence == ExtendedTreeviewEvents.CHANGE:
+            self._changed = (sequence, args, kwargs)
+            return
+
+        super().event_generate(sequence, *args, **kwargs)
+
+    def insert(self, parent, index, iid=None, **kw):
+        result = super().insert(parent, index, iid, **kw)
+        self.event_generate(ExtendedTreeviewEvents.CHANGE)
+        return result
+
+    def delete(self, *args):
+        result = super().delete(*args)
+        self.event_generate(ExtendedTreeviewEvents.CHANGE)
+        return result
+
+    def set(self, item, column=None, value=None):
+        result = super().set(item, column, value)
+
+        if value is not None:
+            self.event_generate(ExtendedTreeviewEvents.CHANGE)
+
+        return result
+
+    def move(self, item, parent, index):
+        result = super().move(item, parent, index)
+        self.event_generate(ExtendedTreeviewEvents.CHANGE)
+        return result

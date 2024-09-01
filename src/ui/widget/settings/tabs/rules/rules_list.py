@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from pydantic.config import JsonDict
 
 from constants.resources import UI_ERROR
-from constants.ui import ERROR_ROW_COLOR, RulesListEvents, EditableTreeviewEvents, \
-    ScrollableTreeviewEvents, CHANGED_ROW_COLOR
+from constants.ui import ERROR_ROW_COLOR, \
+    ScrollableTreeviewEvents, CHANGED_ROW_COLOR, ExtendedTreeviewEvents
 from ui.widget.common.label import Image
 from ui.widget.common.treeview.editable import EditableTreeview
 from ui.widget.common.treeview.pydantic import PydanticTreeviewLoader
@@ -21,14 +21,14 @@ class RulesList(EditableTreeview):
             columns=list(model.model_fields.keys()),
             hand_on_title=True
         )
-        self._loader = PydanticTreeviewLoader(self, model)
 
-        self.has_unsaved_changes = False # dfgsdf Надо сделать иначе, хранить оригинал и сравнивать. Еще думаю стоит добавить подсветку измененных строк до сохранения и вкладки
+        self._loader = PydanticTreeviewLoader(self, model)
         self._error_icons: dict[tuple[str, str], Image] = {}
+
         self.tag_configure("error", background=ERROR_ROW_COLOR)
         self.tag_configure("changed", background=CHANGED_ROW_COLOR)
 
-        self.bind(EditableTreeviewEvents.CHANGE, lambda _: self._changed(), '+')
+        self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._check_errors(), '+')
         self.bind(ScrollableTreeviewEvents.SCROLL, self._place_icons, '+')
         self.bind("<Configure>", lambda _: self.after(1, self._place_icons), '+')
         self.bind("<Control-Key>", self._on_key_press_tree, "+")
@@ -49,15 +49,7 @@ class RulesList(EditableTreeview):
     def has_error(self):
         return len(self._errors()) > 0
 
-    def set_unsaved_changes(self, state: bool):
-        self.has_unsaved_changes = state
-        self.event_generate(RulesListEvents.UNSAVED_CHANGES_STATE)
-
-    def _changed(self):
-        self.set_unsaved_changes(True)
-        self._handle_errors()
-
-    def _handle_errors(self):
+    def _check_errors(self):
         self._destroy_error_icons()
 
         errors = self._errors()
@@ -135,14 +127,19 @@ class RulesList(EditableTreeview):
         if ctrl and event.keycode == ord('A'):
             self.select_all_rows()
 
-    def add_row(self, values=None):
+    def add_row(self, values=None, index=None):
         if not values:
             values = [*self._loader.get_default_row().values()]
-        super().add_row(values)
+        super().add_row(values, index)
 
     def set_data(self, rules_raw: list[JsonDict]):
         self._loader.set_data(rules_raw)
-        self.set_unsaved_changes(False)
 
     def get_data(self) -> list[JsonDict]:
         return self._loader.get_data()
+
+    def has_changes(self) -> bool:
+        return self._loader.has_changes()
+
+    def commit_changes(self):
+        self._loader.commit_changes()

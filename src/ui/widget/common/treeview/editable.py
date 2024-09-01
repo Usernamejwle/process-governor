@@ -80,29 +80,6 @@ class EditableTreeview(ScrollableTreeview):
         self.bind(ScrollableTreeviewEvents.SCROLL, self._place_editor, '+')
         self.bind("<Configure>", lambda _: self.after(1, self._place_editor), '+')
 
-    def insert(self, parent, index, iid=None, **kw):
-        result = super().insert(parent, index, iid, **kw)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
-
-    def delete(self, *args):
-        result = super().delete(*args)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
-
-    def set(self, item, column=None, value=None):
-        result = super().set(item, column, value)
-
-        if value is not None:
-            self.event_generate(EditableTreeviewEvents.CHANGE)
-
-        return result
-
-    def move(self, item, parent, index):
-        result = super().move(item, parent, index)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
-
     def editor(self) -> CellEditor:
         return self._editor
 
@@ -206,17 +183,17 @@ class EditableTreeview(ScrollableTreeview):
 
             self.selection_set(selected_items)
 
-    def add_row(self, values=None):
+    def add_row(self, values=None, index=None):
         selected_items = self.selection()
 
-        if selected_items:
+        if selected_items and index is None:
             selected_item = selected_items[0]
             index = self.index(selected_item)
 
             self.insert('', index, values=values or [])
             self.selection_set(self.get_children()[index])
         else:
-            self.insert('', 0, values=values or [])
+            self.insert('', index or 0, values=values or [])
 
     def delete_selected_rows(self):
         selected_items = self.selection()

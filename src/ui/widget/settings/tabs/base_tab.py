@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import PhotoImage, ttk, LEFT
+from tkinter import PhotoImage, ttk
 from tkinter.ttk import Notebook
 
 
@@ -8,9 +8,6 @@ class BaseTab(ttk.Frame, ABC):
         super().__init__(master)
 
         self.master: Notebook = master
-
-    def add_tab_to_master(self):
-        self.master.add(self, text=f" {self.title()} ", image=self.icon(), compound=LEFT)
 
     @staticmethod
     @abstractmethod
@@ -41,7 +38,7 @@ class BaseTab(ttk.Frame, ABC):
         pass
 
     @abstractmethod
-    def has_unsaved_changes(self) -> bool:
+    def has_changes(self) -> bool:
         pass
 
     @abstractmethod

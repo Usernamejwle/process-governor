@@ -21,6 +21,7 @@ class PydanticTreeviewLoader:
             __init__(self, treeview: ExtendedTreeview, model: type[BaseModel]):
         self._treeview = treeview
         self._model = model
+        self._original_data = []
         self._setup_columns()
 
     def _setup_columns(self):
@@ -55,24 +56,44 @@ class PydanticTreeviewLoader:
 
     def set_data(self, rules: Iterable[JsonDict | BaseModel]):
         treeview = self._treeview
-        treeview.clear()
-        column_names = treeview["columns"]
 
-        for rule in rules:
-            values = [
-                getattr(rule, column_name, '')
-                if isinstance(rule, BaseModel)
-                else rule.get(column_name, '')
-                for column_name in column_names
-            ]
-            values = list(map(lambda value: '' if value is None or str(value) == '' else str(value), values))
-            treeview.insert('', END, values=values)
+        try:
+            self._original_data = []
 
-        if hasattr(treeview, 'sort_column'):
-            treeview.sort_column()
+            treeview.begin_changes()
+            treeview.clear()
 
-    def has_changes(self):
-        pass
+            column_names = treeview["columns"]
+
+            for rule in rules:
+                values = [
+                    getattr(rule, column_name, '')
+                    if isinstance(rule, BaseModel)
+                    else rule.get(column_name, '')
+                    for column_name in column_names
+                ]
+                values = tuple(map(self._to_str, values))
+
+                self._original_data.append(values)
+                self._treeview.insert('', END, values=values)
+
+            if hasattr(treeview, 'sort_column'):
+                treeview.sort_column()
+        finally:
+            treeview.end_changes()
+
+    @staticmethod
+    def _to_str(value) -> str:
+        if value is None or str(value) == '':
+            return ''
+
+        return str(value)
+
+    def has_changes(self) -> bool:
+        return self._original_data != self._treeview.as_list_of_list()
+
+    def commit_changes(self):
+        self._original_data = self._treeview.as_list_of_list()
 
     def get_data(self) -> list[JsonDict]:
         return self._treeview.as_list_of_dict()

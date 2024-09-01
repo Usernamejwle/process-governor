@@ -1,8 +1,9 @@
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, LEFT
 from typing import Optional
 
 from constants.app_info import APP_NAME_WITH_VERSION
 from constants.log import LOG
+from constants.ui import ExtendedTreeviewEvents
 from service.config_service import ConfigService
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.process_list import ProcessListTab
@@ -22,14 +23,20 @@ class SettingsTabs(ttk.Notebook):
         self._config: Optional[dict] = None
         self._create_tabs()
 
+        self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_tabs_state(), "+")
+
     def _create_tabs(self):
         process_rules_tab = ProcessRulesTab(self)
         service_rules_tab = ServiceRulesTab(self)
-        process_list_tab = ProcessListTab(self, process_rules_tab.rules_list, service_rules_tab.rules_list)
+        process_list_tab = ProcessListTab(
+            self,
+            process_rules_tab.rules_list,
+            service_rules_tab.rules_list
+        )
 
-        process_list_tab.add_tab_to_master()
-        process_rules_tab.add_tab_to_master()
-        service_rules_tab.add_tab_to_master()
+        self._add_tab(process_list_tab)
+        self._add_tab(process_rules_tab)
+        self._add_tab(service_rules_tab)
 
     def current_tab(self) -> BaseTab:
         current_index = self.index(self.select())
@@ -38,7 +45,7 @@ class SettingsTabs(ttk.Notebook):
 
     def has_unsaved_changes(self) -> bool:
         for tab in self.frames():
-            if tab.has_unsaved_changes():
+            if tab.has_changes():
                 return True
         return False
 
@@ -80,5 +87,21 @@ class SettingsTabs(ttk.Notebook):
     def frames(self) -> list[BaseTab]:
         return [self.nametowidget(tab_id) for tab_id in self.tabs()]
 
+    def frames_by_tab(self) -> dict[str, BaseTab]:
+        return {
+            tab_id: self.nametowidget(tab_id)
+            for tab_id in self.tabs()
+        }
+
     def get_default_tooltip(self):
         return self.current_tab().default_tooltip()
+
+    def _add_tab(self, tab: BaseTab):
+        self.add(tab, text=f" {tab.title()}", image=tab.icon(), compound=LEFT)
+
+    def _update_tabs_state(self):
+        tabs = self.frames_by_tab()
+
+        for id, tab in tabs.items():
+            star = "*" if tab.has_changes() or tab.has_error() else ""
+            self.tab(id, text=f" {tab.title()} {star}")
