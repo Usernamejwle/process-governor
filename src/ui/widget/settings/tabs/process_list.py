@@ -194,7 +194,7 @@ class ProcessListTab(BaseTab):
             command=lambda: self._add_rule(RuleType.SERVICE)
         )
 
-        process_list.bind("<Button-3>", self._show_context_menu)
+        process_list.bind("<Button-3>", self._show_context_menu, '+')
 
     def _show_context_menu(self, event):
         context_menu = self._context_menu

@@ -34,7 +34,7 @@ class ExtendedTreeview(ttk.Treeview):
 
         self._setup_font()
         self.bind('<Configure>', self._calculate_columns_width, '+')
-        self.bind('<Escape>', lambda _: self.clear_selection())
+        self.bind('<Escape>', lambda _: self.clear_selection(), '+')
 
         if hand_on_title:
             self.bind("<Motion>", self._on_motion, '+')
