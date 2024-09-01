@@ -75,9 +75,13 @@ class SettingsTabs(ttk.Notebook):
                 return False
 
             for tab in self.frames():
-                tab.save_to_config(self._config)
+                if not tab.has_changes():
+                    continue
 
-            ConfigService.save_config_raw(self._config)
+                tab.save_to_config(self._config)
+                ConfigService.save_config_raw(self._config)
+                tab.commit_changes()
+
             return True
         except:
             LOG.exception("Error when saving file.")

@@ -166,6 +166,9 @@ class ProcessListTab(BaseTab):
     def has_error(self) -> bool:
         return False
 
+    def commit_changes(self):
+        pass
+
     def _setup_widgets(self):
         self.process_list = self._create_process_list()
         self._progress_bar = self._create_progress_bar()

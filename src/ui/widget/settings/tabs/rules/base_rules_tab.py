@@ -81,10 +81,12 @@ class BaseRulesTab(BaseTab, ABC):
     def save_to_config(self, config: dict):
         rules_list = self.rules_list
         config[self.rule_type.field_in_config] = rules_list.get_data()
-        self.rules_list.commit_changes()
 
     def has_changes(self) -> bool:
         return self.rules_list.has_changes()
+
+    def commit_changes(self):
+        self.rules_list.commit_changes()
 
     def has_error(self) -> bool:
         return self.rules_list.has_error()

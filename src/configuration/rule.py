@@ -26,7 +26,7 @@ class ProcessRule(BaseModel):
                     "**Supports wildcard:** `*` (matches any characters), `?` (matches any single character) and `**` (matches any sequence of directories).\n"
                     "**Examples:** `name.exe`, `logioptionsplus_*.exe`, `D:/FolderName/App.exe` or `C:/Program Files/**/app.exe --file Document.txt`.",
         stretchable_column_ui=True,
-        # justify_ui="left"
+        justify_ui="left"
     )
 
     priority: Optional[PriorityStr] = Field(

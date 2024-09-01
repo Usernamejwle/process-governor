@@ -86,7 +86,7 @@ class Settings(Tk):
     def _create_actions(self):
         self._actions = actions = SettingsActions(self)
 
-        actions.bind(ActionEvents.APPLY, lambda _: self._tabs.save_data(), "+")
+        actions.bind(ActionEvents.APPLY, lambda _: self._apply(), "+")
         actions.bind(ActionEvents.APPLY_N_CLOSE, lambda _: self._apply_and_save(), "+")
         actions.bind(ActionEvents.CONFIG, lambda _: open_config_file(), "+")
         actions.bind(ActionEvents.LOG, lambda _: open_log_file(), "+")
@@ -94,8 +94,13 @@ class Settings(Tk):
         self._update_actions_state()
 
     def _apply_and_save(self):
-        self._tabs.save_data()
+        self._apply()
         self._on_window_closing()
+
+    def _apply(self):
+        result = self._tabs.save_data()
+        self._update_actions_state()
+        return result
 
     def _on_window_closing(self):
         has_error = self._tabs.has_error()
@@ -116,7 +121,7 @@ class Settings(Tk):
                 if result is None:
                     return
 
-                if result and not self._tabs.save_data():
+                if result and not self._apply():
                     return
         else:
             if has_error:

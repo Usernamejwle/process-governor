@@ -42,6 +42,10 @@ class BaseTab(ttk.Frame, ABC):
         pass
 
     @abstractmethod
+    def commit_changes(self):
+        pass
+
+    @abstractmethod
     def has_error(self) -> bool:
         pass
 
