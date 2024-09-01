@@ -1,9 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class BoolStr(str, Enum):
+class BoolStr(StrEnum):
     NO = "N"
     YES = "Y"
-
-    def __str__(self):
-        return str(self.value)

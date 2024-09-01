@@ -3,7 +3,9 @@ import os.path
 from abc import ABC
 from datetime import datetime
 from os.path import exists
-from typing import Optional, List, Any
+from typing import Optional, Any
+
+from pydantic.config import JsonDict
 
 from configuration.config import Config
 from constants.files import CONFIG_FILE_NAME, CONFIG_FILE_ENCODING
@@ -90,7 +92,7 @@ class ConfigService(ABC):
         """
         try:
             for rule_type in RuleType:
-                rules: List[Any] = cls.load_config_raw().get(rule_type.field_in_config, [])
+                rules: list[Any] = cls.load_config_raw().get(rule_type.field_in_config, [])
 
                 try:
                     for rule in rules:
@@ -103,7 +105,7 @@ class ConfigService(ABC):
         return False
 
     @classmethod
-    def load_config_raw(cls) -> dict:
+    def load_config_raw(cls) -> JsonDict:
         """
         Loads the raw configuration as a dictionary from the configuration file.
 
@@ -117,7 +119,7 @@ class ConfigService(ABC):
             return json.load(file)
 
     @classmethod
-    def save_config_raw(cls, config: dict):
+    def save_config_raw(cls, config: JsonDict):
         """
         Saves the raw configuration dictionary to the configuration file.
 

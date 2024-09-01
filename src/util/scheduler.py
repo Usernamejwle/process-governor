@@ -2,19 +2,28 @@ import threading
 
 
 class TaskScheduler:
-    def __init__(self):
-        self.tasks = {}
+    _tasks = {}
 
-    def _execute_task(self, key, callback, *args, **kwargs):
+    @classmethod
+    def _execute_task(cls, key, callback, *args, **kwargs):
         try:
             callback(*args, **kwargs)
         finally:
-            del self.tasks[key]
+            del cls._tasks[key]
 
-    def schedule_task(self, key, callback, delay=0, *args, **kwargs):
-        if key not in self.tasks:
-            self.tasks[key] = threading.Timer(delay, self._execute_task, args=(key, callback) + args, kwargs=kwargs)
-            self.tasks[key].start()
+    @classmethod
+    def schedule_task(cls, key, callback, delay=0, *args, **kwargs):
+        if key not in cls._tasks:
+            if delay:
+                cls._tasks[key] = threading.Timer(delay, cls._execute_task, args=(key, callback) + args, kwargs=kwargs)
+            else:
+                cls._tasks[key] = threading.Thread(target=cls._execute_task, args=(key, callback) + args, kwargs=kwargs)
+
+            cls._tasks[key].start()
+
+    @classmethod
+    def check_task(cls, key) -> bool:
+        return key in cls._tasks
 
 
 if __name__ == '__main__':
@@ -22,12 +31,10 @@ if __name__ == '__main__':
         print(f"Function executed with message: {message}")
 
 
-    scheduler = TaskScheduler()
-
-    scheduler.schedule_task("task1", my_function, 5, "Hello after 5 seconds")
-    scheduler.schedule_task("task1", my_function, 2, "Hello after 2 seconds")
-    scheduler.schedule_task("task2", my_function, 3, "Hello after 3 seconds")
-    scheduler.schedule_task("task3", my_function, 0, "Immediate execution")
+    TaskScheduler.schedule_task("task1", my_function, 5, "Hello after 5 seconds")
+    TaskScheduler.schedule_task("task1", my_function, 2, "Hello after 2 seconds")
+    TaskScheduler.schedule_task("task2", my_function, 3, "Hello after 3 seconds")
+    TaskScheduler.schedule_task("task3", my_function, 0, "Immediate execution")
 
     import time
 

@@ -28,7 +28,7 @@ class ServicesInfoService(ABC):
     """
 
     @staticmethod
-    def get_list() -> dict[int, Service]:
+    def get_services() -> dict[int, Service]:
         """
         Get a dictionary of running services and their information.
 

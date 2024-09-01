@@ -1,15 +1,13 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 from psutil._pswindows import IOPriority
 
 
-class IOPriorityStr(str, Enum):
+class IOPriorityStr(StrEnum):
     VERYLOW = 'VeryLow'
     LOW = 'Low'
     NORMAL = 'Normal'
-    def __str__(self):
-        return str(self.value)
 
 
 to_iopriority: Final[dict[IOPriorityStr, IOPriority]] = {

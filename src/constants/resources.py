@@ -7,12 +7,16 @@ APP_ICON: Final[str] = f"{APP_PATH}/resources/app.ico"
 
 UI_PROCESS_RULES: Final[str] = f"{APP_PATH}/resources/UI/process-rules.png"
 UI_SERVICE_RULES: Final[str] = f"{APP_PATH}/resources/UI/service-rules.png"
+UI_PROCESS_LIST: Final[str] = f"{APP_PATH}/resources/UI/process-list.png"
 
 UI_ADD: Final[str] = f"{APP_PATH}/resources/UI/add.png"
 UI_DELETE: Final[str] = f"{APP_PATH}/resources/UI/delete.png"
 UI_UP: Final[str] = f"{APP_PATH}/resources/UI/up.png"
 UI_DOWN: Final[str] = f"{APP_PATH}/resources/UI/down.png"
 UI_SAVE: Final[str] = f"{APP_PATH}/resources/UI/save.png"
+UI_REFRESH: Final[str] = f"{APP_PATH}/resources/UI/refresh.png"
+UI_CONFIG: Final[str] = f"{APP_PATH}/resources/UI/config.png"
+UI_LOG: Final[str] = f"{APP_PATH}/resources/UI/log.png"
 
 UI_INFO_TOOLTIP: Final[str] = f"{APP_PATH}/resources/UI/info-tooltip.png"
 UI_WARN_TOOLTIP: Final[str] = f"{APP_PATH}/resources/UI/warn-tooltip.png"

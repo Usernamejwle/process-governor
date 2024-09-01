@@ -1,52 +1,61 @@
-import tkinter as tk
 from abc import ABC
-from tkinter import ttk, PhotoImage
+from tkinter import ttk, X, BOTH, NORMAL, DISABLED
 from tkinter.ttk import Notebook
 
 from constants.resources import UI_ADD, UI_DELETE, UI_UP, UI_DOWN
-from constants.ui import UI_PADDING, RulesListEvents, ActionEvents
+from constants.ui import UI_PADDING, RulesListEvents, ActionEvents, LEFT_PACK
 from enums.rules import RuleType
-from ui.widget.common.button import IconedButton
+from ui.widget.common.button import ExtendedButton
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.rules.rules_list import RulesList
+from util.ui import load_img
 
 
 class BaseRulesTab(BaseTab, ABC):
+    @staticmethod
+    def default_tooltip() -> str:
+        return (
+            "To add a new rule, click the **Add** button.\n"
+            "To edit a rule, **double-click** on the corresponding cell.\n"
+            "Use the **context menu** for additional actions."
+        )
+
     def __init__(self, master: Notebook, rule_type: RuleType):
         super().__init__(master)
 
         self.rule_type: RuleType = rule_type
+        self.model = rule_type.clazz
         self.rules_list = self._create_rules_list()
-        self.buttons = self._create_buttons()
+        self.actions = self._create_actions()
 
-        self._update_buttons_state()
+        self._update_actions_state()
         self._pack()
 
     def _pack(self):
-        self.buttons.pack(fill=tk.X, padx=UI_PADDING, pady=(UI_PADDING, 0))
-        self.rules_list.pack(fill=tk.BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
+        self.actions.pack(fill=X, padx=UI_PADDING, pady=(UI_PADDING, 0))
+        self.rules_list.pack(fill=BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
 
     def _create_rules_list(self):
         rules_list = RulesList(self.rule_type.clazz, self)
 
-        rules_list.bind("<<TreeviewSelect>>", lambda _: self._update_buttons_state(), "+")
-        rules_list.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_buttons_state(), "+")
+        rules_list.bind("<<TreeviewSelect>>", lambda _: self._update_actions_state(), "+")
+        rules_list.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_actions_state(), "+")
 
         return rules_list
 
-    def _create_buttons(self):
-        buttons = RulesTabButtons(self)
+    def _create_actions(self):
+        actions = RulesTabActions(self)
 
-        buttons.bind(ActionEvents.ADD, lambda _: self.rules_list.add_row(), "+")
-        buttons.bind(ActionEvents.DELETE, lambda _: self.rules_list.delete_selected_rows(), "+")
-        buttons.bind(ActionEvents.UP, lambda _: self.rules_list.move_rows_up(), "+")
-        buttons.bind(ActionEvents.DOWN, lambda _: self.rules_list.move_rows_down(), "+")
+        actions.bind(ActionEvents.ADD, lambda _: self.rules_list.add_row(), "+")
+        actions.bind(ActionEvents.DELETE, lambda _: self.rules_list.delete_selected_rows(), "+")
+        actions.bind(ActionEvents.UP, lambda _: self.rules_list.move_rows_up(), "+")
+        actions.bind(ActionEvents.DOWN, lambda _: self.rules_list.move_rows_down(), "+")
 
-        return buttons
+        return actions
 
-    def _update_buttons_state(self):
+    def _update_actions_state(self):
         rules_list = self.rules_list
-        buttons = self.buttons
+        actions = self.actions
         selected_items = rules_list.selection()
 
         if selected_items:
@@ -56,13 +65,13 @@ class BaseRulesTab(BaseTab, ABC):
             last_index = rules_list.index(last_selected_item)
             total_items = len(rules_list.get_children())
 
-            buttons.move_up["state"] = tk.NORMAL if first_index > 0 else tk.DISABLED
-            buttons.move_down["state"] = tk.NORMAL if last_index < total_items - 1 else tk.DISABLED
+            actions.move_up["state"] = NORMAL if first_index > 0 else DISABLED
+            actions.move_down["state"] = NORMAL if last_index < total_items - 1 else DISABLED
         else:
-            buttons.move_up["state"] = tk.DISABLED
-            buttons.move_down["state"] = tk.DISABLED
+            actions.move_up["state"] = DISABLED
+            actions.move_down["state"] = DISABLED
 
-        buttons.delete["state"] = tk.NORMAL if selected_items else tk.DISABLED
+        actions.delete["state"] = NORMAL if selected_items else DISABLED
 
         self.master.event_generate(RulesListEvents.UNSAVED_CHANGES_STATE)
 
@@ -81,42 +90,45 @@ class BaseRulesTab(BaseTab, ABC):
         return self.rules_list.has_error()
 
 
-class RulesTabButtons(ttk.Frame):
+class RulesTabActions(ttk.Frame):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._setup_btn()
 
     def _setup_btn(self):
-        self.add = add = IconedButton(
+        self.add = add = ExtendedButton(
             self,
-            text=" Add",
-            command=lambda: self.event_generate(ActionEvents.ADD),
-            image=PhotoImage(file=UI_ADD)
+            text="Add",
+            event=ActionEvents.ADD,
+            image=load_img(file=UI_ADD),
+            description="**Adds** a rule before the current."
         )
 
-        self.delete = delete = IconedButton(
+        self.delete = delete = ExtendedButton(
             self,
-            text=" Del",
-            command=lambda: self.event_generate(ActionEvents.DELETE),
-            image=PhotoImage(file=UI_DELETE)
+            text="Del",
+            event=ActionEvents.DELETE,
+            image=load_img(file=UI_DELETE),
+            description="**Deletes** the selected rules."
         )
 
-        self.move_up = move_up = IconedButton(
+        self.move_up = move_up = ExtendedButton(
             self,
-            text=" Up",
-            command=lambda: self.event_generate(ActionEvents.UP),
-            image=PhotoImage(file=UI_UP)
+            text="Up",
+            event=ActionEvents.UP,
+            image=load_img(file=UI_UP),
+            description="**Moves** the current rule __up__."
         )
 
-        self.move_down = move_down = IconedButton(
+        self.move_down = move_down = ExtendedButton(
             self,
-            text=" Down",
-            command=lambda: self.event_generate(ActionEvents.DOWN),
-            image=PhotoImage(file=UI_DOWN)
+            text="Down",
+            event=ActionEvents.DOWN,
+            image=load_img(file=UI_DOWN),
+            description="**Moves** the current rule __down__."
         )
 
-        left_btn_pack = dict(side=tk.LEFT, padx=(0, UI_PADDING))
-        add.pack(**left_btn_pack)
-        delete.pack(**left_btn_pack)
-        move_up.pack(**left_btn_pack)
-        move_down.pack(**left_btn_pack)
+        add.pack(**LEFT_PACK)
+        delete.pack(**LEFT_PACK)
+        move_up.pack(**LEFT_PACK)
+        move_down.pack(**LEFT_PACK)

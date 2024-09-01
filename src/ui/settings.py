@@ -1,52 +1,36 @@
 import os
-import tkinter as tk
-from threading import Thread
-from tkinter import messagebox, ttk
-
-from PIL.ImageTk import PhotoImage
+from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, NORMAL, DISABLED
 
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
-from constants.resources import APP_ICON, UI_SAVE
-from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, RulesListEvents, EditableTreeviewEvents
-from ui.widget.common.button import IconedButton
+from constants.resources import APP_ICON, UI_SAVE, UI_LOG, UI_CONFIG
+from constants.threads import THREAD_SETTINGS
+from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, RulesListEvents, EditableTreeviewEvents, \
+    RIGHT_PACK, LEFT_PACK, OPEN_CONFIG_LABEL, OPEN_LOG_LABEL
+from ui.widget.common.button import ExtendedButton
 from ui.widget.settings.settings_tabs import SettingsTabs
+from ui.widget.settings.tabs.base_tab import BaseTab
+from ui.widget.settings.tabs.process_list import ProcessListTab
 from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
 from ui.widget.settings.tooltip import Tooltip
+from util.files import open_config_file, open_log_file
 from util.messages import yesno_error_box
+from util.scheduler import TaskScheduler
+from util.ui import load_img
 
 
-class SettingsButtons(ttk.Frame):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._setup_btn()
-
-    def _setup_btn(self):
-        self.save = save = IconedButton(
-            self,
-            text=" Apply",
-            command=lambda: self.event_generate(ActionEvents.SAVE),
-            image=PhotoImage(file=UI_SAVE)
-        )
-        right_btn_pack = dict(side=tk.RIGHT, padx=(UI_PADDING, 0))
-        save.pack(**right_btn_pack)
-
-
-class Settings(tk.Tk):
-    _DEFAULT_TOOLTIP = (
-        "To add a new rule, click the **Add** button.\n"
-        "To edit a rule, **double-click** on the corresponding cell."
-    )
-
-    _tabs = None
-    _tooltip = None
-    _buttons = None
-
+class Settings(Tk):
     def __init__(self):
         super().__init__()
+
+        self._tabs: SettingsTabs
+        self._tooltip: Tooltip
+        self._actions: SettingsActions
+
         self._setup_window()
         self._create_widgets()
+        self._pack()
         self._setup_tooltips()
 
     def _setup_window(self):
@@ -54,26 +38,31 @@ class Settings(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW", self._on_window_closing)
         self.iconbitmap(APP_ICON)
-        self.title(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}")
+        self.title(APP_NAME_WITH_VERSION)
         self.minsize(*RC_WIN_SIZE)
 
         self.bind_all("<Key>", self._on_key_release, "+")
 
-    @staticmethod
-    def _on_key_release(event):
+    def _on_key_release(self, event):
         ctrl = (event.state & 0x4) != 0
+        shift = (event.state & 0x1) != 0
 
-        if event.keycode == ord('X') and ctrl and event.keysym.lower() != "x":
-            event.widget.event_generate("<<Cut>>")
+        keycode = event.keycode
+        widget = event.widget
+        keysym = event.keysym.upper()
 
-        if event.keycode == ord('V') and ctrl and event.keysym.lower() != "v":
-            event.widget.event_generate("<<Paste>>")
+        key_actions = {
+            ord('X'): "<<Cut>>",
+            ord('V'): "<<Paste>>",
+            ord('C'): "<<Copy>>",
+            ord('A'): "<<SelectAll>>",
+            # ord('Z'): "<<Undo>>" if not shift else "<<Redo>>",
+            # ord('Y'): "<<Redo>>",
+        }
 
-        if event.keycode == ord('C') and ctrl and event.keysym.lower() != "c":
-            event.widget.event_generate("<<Copy>>")
-
-        if event.keycode == ord('A') and ctrl and event.keysym.lower() != "c":
-            event.widget.event_generate("<<SelectAll>>")
+        if ctrl and keycode in key_actions and keysym == '??':
+            self.after(0, lambda: widget.event_generate(key_actions[keycode]))
+            # return 'break'
 
     def _center_window(self):
         x = (self.winfo_screenwidth() // 2) - (RC_WIN_SIZE[0] // 2)
@@ -82,27 +71,31 @@ class Settings(tk.Tk):
         self.geometry(f"{RC_WIN_SIZE[0]}x{RC_WIN_SIZE[1]}+{x}+{y}")
 
     def _create_widgets(self):
-        self._create_tooltips()
         self._create_tabs()
-        self._create_buttons()
+        self._create_tooltips()
+        self._create_actions()
 
     def _create_tooltips(self):
-        self._tooltip = Tooltip(self, text=self._DEFAULT_TOOLTIP)
-        self._tooltip.pack(fill=tk.X, expand=False, side=tk.TOP, padx=UI_PADDING, pady=(UI_PADDING, 0))
+        self._tooltip = Tooltip(self, text=self._tabs.get_default_tooltip())
 
     def _create_tabs(self):
         self._tabs = tabs = SettingsTabs(self)
         tabs.load_data()
-        tabs.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_buttons_state(), "+")
-        tabs.pack(fill=tk.BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
+        tabs.bind(RulesListEvents.UNSAVED_CHANGES_STATE, lambda _: self._update_actions_state(), "+")
 
-    def _create_buttons(self):
-        self._buttons = buttons = SettingsButtons(self)
+    def _create_actions(self):
+        self._actions = actions = SettingsActions(self)
 
-        buttons.pack(fill=tk.X, padx=UI_PADDING, pady=(0, UI_PADDING))
-        buttons.bind(ActionEvents.SAVE, lambda _: self._tabs.save_data(), "+")
+        actions.bind(ActionEvents.APPLY, lambda _: self._tabs.save_data(), "+")
+        actions.bind(ActionEvents.APPLY_N_CLOSE, lambda _: self._apply_and_save(), "+")
+        actions.bind(ActionEvents.CONFIG, lambda _: open_config_file(), "+")
+        actions.bind(ActionEvents.LOG, lambda _: open_log_file(), "+")
 
-        self._update_buttons_state()
+        self._update_actions_state()
+
+    def _apply_and_save(self):
+        self._tabs.save_data()
+        self._on_window_closing()
 
     def _on_window_closing(self):
         has_error = self._tabs.has_error()
@@ -111,14 +104,14 @@ class Settings(tk.Tk):
             if has_error:
                 message = ("There are errors in the rules, and they can't be saved. "
                            "Do you want to DISCARD them and exit?")
-                result = messagebox.askyesno(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesno(f"{APP_NAME_WITH_VERSION}", message)
 
                 if not result:
                     return
             else:
                 message = ("There are unsaved changes. "
                            "Do you want to save them before exiting?")
-                result = messagebox.askyesnocancel(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesnocancel(f"{APP_NAME_WITH_VERSION}", message)
 
                 if result is None:
                     return
@@ -130,76 +123,112 @@ class Settings(tk.Tk):
                 message = (
                     f"There are errors in the rules, and they must be corrected before the application can work properly. "
                     f"Do you still want to close the {SETTINGS_TITLE}?")
-                result = messagebox.askyesno(f"{SETTINGS_TITLE} - {APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesno(f"{APP_NAME_WITH_VERSION}", message)
 
                 if not result:
                     return
 
         self.destroy()
 
-    def _update_buttons_state(self, _=None):
+    def _update_actions_state(self, _=None):
         tabs = self._tabs
-        buttons = self._buttons
+        actions = self._actions
 
-        buttons.save["state"] = tk.NORMAL if tabs.has_unsaved_changes() and not tabs.has_error() else tk.DISABLED
+        actions.apply["state"] = NORMAL if tabs.has_unsaved_changes() and not tabs.has_error() else DISABLED
+        actions.apply_n_close["state"] = actions.apply["state"]
 
     def _setup_tooltips(self):
-        self._setup_tooltip(self._buttons.save, "__Adds__ a rule after the current")
+        self._setup_tooltip(self._actions.open_config)
+        self._setup_tooltip(self._actions.open_log)
+        self._setup_tooltip(self._actions.apply)
+        self._setup_tooltip(self._actions.apply_n_close)
 
         tabs = self._tabs
         tabs.bind("<Motion>", self._set_tooltip_by_tab, "+")
-        tabs.bind("<Leave>", lambda _: self._tooltip.set(self._DEFAULT_TOOLTIP), "+")
+        tabs.bind("<Leave>", lambda _: self._tooltip.set(self._tabs.get_default_tooltip()), "+")
 
         for tab in tabs.frames():
-            if not isinstance(tab, BaseRulesTab):
-                continue
+            tab: BaseRulesTab | ProcessListTab
+            actions = tab.actions
 
-            btns = tab.buttons
-            self._setup_tooltip(btns.add, "__Adds__ a rule after the current")
-            self._setup_tooltip(btns.delete, "__Deletes__ the selected rules")
-            self._setup_tooltip(btns.move_up, "__Moves__ the current rule __up__")
-            self._setup_tooltip(btns.move_down, "__Moves__ the current rule __down__")
+            if isinstance(tab, BaseRulesTab):
+                self._setup_tooltip(actions.add)
+                self._setup_tooltip(actions.delete)
+                self._setup_tooltip(actions.move_up)
+                self._setup_tooltip(actions.move_down)
 
-            rules_list = tab.rules_list
-            rules_list.bind("<Motion>", self._set_tooltip_by_tree, "+")
-            rules_list.bind(EditableTreeviewEvents.START_EDIT_CELL, self._setup_tooltip_cell_editor, "+")
-            rules_list.error_icon_created = lambda icon, tooltip: self._setup_tooltip(icon, tooltip, True, False)
-            self._setup_tooltip(rules_list, "", enter=False)
+                rules_list = tab.rules_list
+                rules_list.bind("<Motion>", self._set_tooltip_by_tree, "+")
+                rules_list.bind(EditableTreeviewEvents.START_EDIT_CELL, self._setup_tooltip_cell_editor, "+")
+                rules_list.error_icon_created = lambda icon, tooltip: self._setup_tooltip(icon, tooltip, True, False)
+                self._setup_tooltip(rules_list, "", enter=False)
 
-    def _setup_tooltip(self, widget, text: str, error: bool = False, leave: bool = True, enter: bool = True):
+            if isinstance(tab, ProcessListTab):
+                self._setup_tooltip(actions.refresh)
+                self._setup_tooltip(actions.filterByType)
+                self._setup_tooltip(actions.search)
+
+                process_list = tab.process_list
+                process_list.bind("<Motion>", self._set_tooltip_by_tree, "+")
+                self._setup_tooltip(process_list, "", enter=False)
+
+    def _setup_tooltip(self, widget, text: str = None, error: bool = False, leave: bool = True, enter: bool = True):
+        if hasattr(widget, 'description') and text is None:
+            text = widget.description
+
+        if text is None:
+            raise ValueError("text is None")
+
         if enter:
             def on_enter(_):
                 self._tooltip.set(text, error)
 
-            widget.bind("<Enter>", on_enter)
+            widget.bind("<Enter>", on_enter, '+')
 
         if leave:
             def on_leave(_):
-                self._tooltip.set(self._DEFAULT_TOOLTIP)
+                self._tooltip.set(self._tabs.get_default_tooltip())
 
-            widget.bind("<Leave>", on_leave)
+            widget.bind("<Leave>", on_leave, '+')
 
     def _set_tooltip_by_tree(self, event):
         if not event or not isinstance(event.widget, ttk.Treeview):
             return
 
-        tab = self._tabs.current_tab()
-        cell = tab.rules_list.get_cell_info(event)
+        tab: BaseTab = self._tabs.current_tab()
+        treeview = None
 
-        if cell:
-            self._tooltip.set(tab.rule_type.clazz.model_fields[cell.column_name].description)
+        if isinstance(tab, BaseRulesTab):
+            treeview = tab.rules_list
+
+        if isinstance(tab, ProcessListTab):
+            treeview = tab.process_list
+
+        if treeview is None:
+            raise ValueError(type(tab))
+
+        cell = treeview.get_cell_info_by_event(event)
+
+        if cell.region == 'heading':
+            self._tooltip.set(tab.model.model_fields[cell.column_name].description)
+        else:
+            self._tooltip.set(self._tabs.get_default_tooltip())
 
     def _setup_tooltip_cell_editor(self, _=None):
         tab = self._tabs.current_tab()
-        rules_list = tab.rules_list
-        cell = rules_list.current_cell()
 
-        if not cell:
+        if not isinstance(tab, BaseRulesTab):
+            return
+
+        rules_list = tab.rules_list
+        editor = rules_list.editor()
+
+        if not editor:
             return
 
         self._setup_tooltip(
-            rules_list.popup(),
-            tab.rule_type.clazz.model_fields[cell.column_name].description,
+            rules_list.editor(),
+            tab.rule_type.clazz.model_fields[editor.cell.column_name].description,
             leave=False
         )
 
@@ -207,36 +236,73 @@ class Settings(tk.Tk):
         try:
             tab_index = event.widget.index("@%d,%d" % (event.x, event.y))
         except:
-            self._tooltip.set(self._DEFAULT_TOOLTIP)
+            self._tooltip.set(self._tabs.get_default_tooltip())
             return
 
         tabs = self._tabs
         tab: BaseRulesTab = tabs.nametowidget(tabs.tabs()[tab_index])
         self._tooltip.set(tab.description())
 
+    def _pack(self):
+        self._tooltip.pack(fill=X, expand=False, side=TOP, padx=UI_PADDING, pady=(UI_PADDING, 0))
+        self._tabs.pack(fill=BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
+        self._actions.pack(fill=X, padx=UI_PADDING, pady=(0, UI_PADDING))
 
-is_settings_open = False
+
+class SettingsActions(ttk.Frame):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._setup_btn()
+
+    def _setup_btn(self):
+        self.open_config = open_config = ExtendedButton(
+            self,
+            text=f"{OPEN_CONFIG_LABEL}",
+            event=ActionEvents.CONFIG,
+            image=load_img(file=UI_CONFIG),
+            description="**Opens** the __config file__."
+        )
+
+        self.open_log = open_log = ExtendedButton(
+            self,
+            text=f"{OPEN_LOG_LABEL}",
+            event=ActionEvents.LOG,
+            image=load_img(file=UI_LOG),
+            description="**Opens** the __log file__."
+        )
+
+        self.apply = apply = ExtendedButton(
+            self,
+            text="Apply",
+            event=ActionEvents.APPLY,
+            image=load_img(file=UI_SAVE),
+            description="**Applies** the __settings__."
+        )
+
+        self.apply_n_close = apply_n_close = ExtendedButton(
+            self,
+            text="Apply & Close",
+            event=ActionEvents.APPLY_N_CLOSE,
+            image=load_img(file=UI_SAVE),
+            description="**Applies and Сloses** the __settings__."
+        )
+
+        open_config.pack(**LEFT_PACK)
+        open_log.pack(**LEFT_PACK)
+        apply_n_close.pack(**RIGHT_PACK)
+        apply.pack(**RIGHT_PACK)
 
 
 def open_settings():
-    global is_settings_open
-
     def settings():
-        global is_settings_open
         try:
-            is_settings_open = True
-
             app = Settings()
             app.mainloop()
         except:
             LOG.exception(f"An unexpected error occurred in the {SETTINGS_TITLE} of {APP_NAME}.")
             show_settings_error_message()
-        finally:
-            is_settings_open = False
 
-    if not is_settings_open:
-        thread = Thread(target=settings)
-        thread.start()
+    TaskScheduler.schedule_task(THREAD_SETTINGS, settings)
 
 
 def show_settings_error_message():

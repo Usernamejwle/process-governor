@@ -4,11 +4,18 @@ from typing import Optional
 from constants.app_info import APP_NAME_WITH_VERSION
 from constants.log import LOG
 from service.config_service import ConfigService
-from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
+from ui.widget.settings.tabs.base_tab import BaseTab
+from ui.widget.settings.tabs.process_list import ProcessListTab
 from ui.widget.settings.tabs.rules.rules_tab import ServiceRulesTab, ProcessRulesTab
 
 
 class SettingsTabs(ttk.Notebook):
+    _DEFAULT_TOOLTIP = (
+        "To add a new rule, click the **Add** button.\n"
+        "To edit a rule, **double-click** on the corresponding cell.\n"
+        "Use the **context menu** for additional actions."
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -16,10 +23,15 @@ class SettingsTabs(ttk.Notebook):
         self._create_tabs()
 
     def _create_tabs(self):
-        ProcessRulesTab(self)
-        ServiceRulesTab(self)
+        process_rules_tab = ProcessRulesTab(self)
+        service_rules_tab = ServiceRulesTab(self)
+        process_list_tab = ProcessListTab(self, process_rules_tab.rules_list, service_rules_tab.rules_list)
 
-    def current_tab(self) -> BaseRulesTab:
+        process_list_tab.add_tab_to_master()
+        process_rules_tab.add_tab_to_master()
+        service_rules_tab.add_tab_to_master()
+
+    def current_tab(self) -> BaseTab:
         current_index = self.index(self.select())
         tab_id = self.tabs()[current_index]
         return self.nametowidget(tab_id)
@@ -65,5 +77,8 @@ class SettingsTabs(ttk.Notebook):
             messagebox.showerror(f"Error Detected - {APP_NAME_WITH_VERSION}", "An error occurred while saving.")
             return False
 
-    def frames(self) -> list[BaseRulesTab]:
+    def frames(self) -> list[BaseTab]:
         return [self.nametowidget(tab_id) for tab_id in self.tabs()]
+
+    def get_default_tooltip(self):
+        return self.current_tab().default_tooltip()

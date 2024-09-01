@@ -1,14 +1,15 @@
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import psutil
 from psutil._pswindows import Priority, IOPriority
+from pydantic import BaseModel, Field, ConfigDict
 
 from model.service import Service
 
 
-@dataclass
-class Process:
+class Process(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
+
     """
     The Process class represents information about a running process.
 
@@ -16,57 +17,76 @@ class Process:
     (ionice), CPU core affinity, and the associated psutil.Process object.
     """
 
-    pid: int
-    """
-    The unique identifier of the process (Process ID).
-    """
+    pid: int = Field(
+        title="PID",
+        description="The unique identifier of the __process__ (**Process ID**).",
+        default_sort_column_ui=True,
+        width_ui=75
+    )
 
-    binpath: str
-    """
-    The full path to the executable binary of the process.
-    """
+    process_name: Optional[str] = Field(
+        title="Process Name",
+        description="The **name** of the __process__.",
+        justify_ui="left",
+        width_ui=200
+    )
 
-    cmdline: str
-    """
-    The command line used to start the process, including all arguments.
-    """
+    service_name: Optional[str] = Field(
+        title="Service Name",
+        description="The **name** of the __service__ associated with this __process__.\n"
+                    "This field may be absent if the process is not a service.",
+        justify_ui="left",
+        width_ui=250
+    )
 
-    name: str
-    """
-    The name of the process.
-    """
+    bin_path: Optional[str] = Field(
+        title="Executable Path",
+        description="The **full path** to the executable binary of the __process__.",
+        stretchable_column_ui=True,
+        justify_ui="left"
+    )
 
-    nice: Optional[Priority]
-    """
-    The priority level of the process (nice). Default is None (no priority specified).
-    """
+    cmd_line: Optional[str] = Field(
+        title="Command Line",
+        description="The **command line** used to start the __process__, including all arguments.",
+        stretchable_column_ui=True,
+        justify_ui="left"
+    )
 
-    ionice: Optional[IOPriority]
-    """
-    The I/O priority of the process (ionice). Default is None (no I/O priority specified).
-    """
+    priority: Optional[Priority] = Field(
+        title="Priority",
+        description="The **priority level** of the __process__.",
+        exclude=True
+    )
 
-    affinity: List[int]
-    """
-    A list of integers representing the CPU cores to which the process is bound (CPU core affinity).
-    """
+    io_priority: Optional[IOPriority] = Field(
+        title="I/O Priority",
+        description="The **I/O priority** of the __process__.",
+        exclude=True
+    )
 
-    process: psutil.Process
-    """
-    The psutil.Process object associated with the process, providing access to additional process information and control.
-    """
+    affinity: Optional[list[int]] = Field(
+        title="CPU Core Affinity",
+        description="A list of integers representing the CPU cores to which the __process__ is bound (**CPU core affinity**).",
+        exclude=True
+    )
 
-    service: Optional[Service]
-    """
-    Contains information about the service if the current process is associated with one.
-    If the process is not related to a service, this will be None.
-    """
+    process: psutil.Process = Field(
+        description="The psutil.Process object associated with the __process__, providing access to additional control.",
+        exclude=True
+    )
+
+    service: Optional[Service] = Field(
+        description="Contains information about the service if the current __process__ is associated with one.\n"
+                    "If the __process__ is not related to a service, this will be None.",
+        exclude=True
+    )
 
     def __hash__(self):
-        return hash((self.pid, self.binpath, self.name, self.cmdline))
+        return hash((self.pid, self.bin_path, self.process_name, self.cmd_line))
 
     def __eq__(self, other):
         if isinstance(other, Process):
-            return ((self.pid, self.binpath, self.name, self.cmdline) ==
-                    (other.pid, other.binpath, other.name, other.cmdline))
+            return ((self.pid, self.bin_path, self.process_name, self.cmd_line) ==
+                    (other.pid, other.bin_path, other.process_name, other.cmd_line))
         return False

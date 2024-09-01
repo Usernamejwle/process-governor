@@ -1,4 +1,3 @@
-import os
 import webbrowser
 
 import pystray
@@ -7,11 +6,11 @@ from pystray import MenuItem, Menu
 from pystray._win32 import Icon
 
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
-from constants.files import CONFIG_FILE_NAME, LOG_FILE_NAME
 from constants.resources import APP_ICON
-from constants.ui import SETTINGS_TITLE
+from constants.ui import OPEN_LOG_LABEL, OPEN_CONFIG_LABEL
 from constants.updates import UPDATE_URL
 from ui.settings import open_settings
+from util.files import open_log_file, open_config_file
 from util.messages import yesno_error_box, show_error, show_info
 from util.startup import toggle_startup, is_in_startup
 from util.updates import check_latest_version
@@ -57,18 +56,11 @@ def init_tray() -> Icon:
     image: Image = Image.open(APP_ICON)
 
     menu: tuple[MenuItem, ...] = (
-        MenuItem(APP_NAME_WITH_VERSION, None, enabled=False),
+        MenuItem(APP_NAME_WITH_VERSION, lambda item: open_settings(), default=True),
         Menu.SEPARATOR,
 
-        MenuItem(SETTINGS_TITLE, lambda item: open_settings(), default=True),
-        Menu.SEPARATOR,
-
-        MenuItem('Open config file', lambda item: os.startfile(CONFIG_FILE_NAME)),
-        MenuItem(
-            'Open log file',
-            lambda item: os.startfile(LOG_FILE_NAME),
-            visible=lambda item: os.path.isfile(LOG_FILE_NAME)
-        ),
+        MenuItem(OPEN_CONFIG_LABEL, lambda _: open_config_file()),
+        MenuItem(OPEN_LOG_LABEL, lambda _: open_log_file()),
         Menu.SEPARATOR,
 
         MenuItem(

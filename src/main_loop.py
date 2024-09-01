@@ -1,5 +1,4 @@
 import os
-from threading import Thread
 from time import sleep
 from typing import Optional
 
@@ -12,12 +11,14 @@ from configuration.migration.all_migration import run_all_migration
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
+from constants.threads import THREAD_SETTINGS, THREAD_TRAY
 from constants.ui import SETTINGS_TITLE
 from service.config_service import ConfigService
 from service.rules_service import RulesService
-from ui.settings import open_settings, is_settings_open
+from ui.settings import open_settings
 from ui.tray import init_tray
 from util.messages import yesno_error_box, show_error
+from util.scheduler import TaskScheduler
 from util.startup import update_startup
 
 
@@ -43,8 +44,7 @@ def main_loop(tray: Icon):
         tray (Icon): The system tray icon instance to be managed within the loop. It will be stopped gracefully
             when the loop exits.
     """
-    thread = Thread(target=tray.run)
-    thread.start()
+    TaskScheduler.schedule_task(THREAD_TRAY, tray.run)
 
     LOG.info('Application started')
 
@@ -52,7 +52,7 @@ def main_loop(tray: Icon):
     is_changed: bool
     last_error_message = None
 
-    while thread.is_alive():
+    while TaskScheduler.check_task(THREAD_TRAY):
         try:
             config, is_changed = ConfigService.reload_if_changed(config)
 
@@ -113,7 +113,7 @@ def show_rules_error_message():
     title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     message = "An error has occurred while loading or applying the rules.\n"
 
-    if is_settings_open:
+    if TaskScheduler.check_task(THREAD_SETTINGS):
         message += "Please check the correctness of the rules."
         show_error(title, message)
     else:

@@ -1,10 +1,10 @@
-import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, LEFT, BOTH, RIGHT, Y
 
 from constants.ui import ScrollableTreeviewEvents
+from ui.widget.common.treeview.extended import ExtendedTreeview
 
 
-class ScrollableTreeview(ttk.Treeview):
+class ScrollableTreeview(ExtendedTreeview):
     def __init__(self, master=None, *args, **kwargs):
         self._frame = ttk.Frame(master)
         self._scrollbar = ttk.Scrollbar(
@@ -17,16 +17,27 @@ class ScrollableTreeview(ttk.Treeview):
         self._scrollbar.configure(command=self._on_scrollbar)
         super().configure(yscrollcommand=self._on_scrollbar_mouse)
 
-        self._scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        super().pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
+        self._scrollbar.pack(side=RIGHT, fill=Y)
+        super().pack(fill=BOTH, expand=True, side=LEFT)
 
-        self.bind("<<TreeviewSelect>>", self.__on_select)
+        self.bind("<<TreeviewSelect>>", self.__on_select, '+')
 
     def on_scroll(self):
         pass
 
+    def _forward_geometry_options(self, method, *args, **kwargs):
+        geometry_options = ['anchor', 'expand', 'fill', 'in_', 'ipadx', 'ipady', 'padx', 'pady', 'side']
+        frame_kwargs = {key: value for key, value in kwargs.items() if key in geometry_options}
+        other_kwargs = {key: value for key, value in kwargs.items() if key not in geometry_options}
+
+        if frame_kwargs:
+            getattr(self._frame, method)(*args, **frame_kwargs)
+
+        if other_kwargs:
+            getattr(super(ScrollableTreeview, self), method)(*args, **other_kwargs)
+
     def pack_configure(self, *args, **kwargs):
-        self._frame.pack_configure(*args, **kwargs)
+        return self._forward_geometry_options('pack_configure', *args, **kwargs)
 
     def pack_forget(self):
         self._frame.pack_forget()
@@ -43,7 +54,7 @@ class ScrollableTreeview(ttk.Treeview):
     def place_info(self):
         return self._frame.place_info()
 
-    pack = configure = config = pack_configure
+    pack = pack_configure
     forget = pack_forget
     info = pack_info
 

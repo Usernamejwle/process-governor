@@ -36,7 +36,7 @@ class Service:
     The current status of the Windows service.
     """
 
-    binpath: str
+    bin_path: str
     """
     The binary path of the Windows service, specifying the location of the service executable.
     """

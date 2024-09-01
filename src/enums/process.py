@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ProcessParameter(str, Enum):
+class ProcessParameter(StrEnum):
     AFFINITY = "affinity"
     NICE = "priority"
     IONICE = "I/O priority"
-
-    def __str__(self):
-        return str(self.value)

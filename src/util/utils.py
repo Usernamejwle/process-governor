@@ -1,12 +1,13 @@
 import re
 import sys
-from functools import lru_cache
+from enum import Enum
+from functools import lru_cache, cache
 from re import Pattern
 from types import NoneType
 from typing import get_origin, get_args, Union, Annotated, Optional
 
 
-@lru_cache(maxsize=None)
+@cache
 def path_pattern_to_regex(pattern: str) -> Optional[Pattern]:
     """
     Converts a glob-like path pattern to a regular expression, with partial support for glob syntax.
@@ -51,11 +52,11 @@ def path_match(pattern: str, value: str) -> bool:
         bool: True if any value matches the pattern, False otherwise.
     """
 
-    if pattern == value:
-        return True
-
     if not pattern:
         return False
+
+    if pattern == value:
+        return True
 
     regex = path_pattern_to_regex(pattern)
 
@@ -132,3 +133,23 @@ def is_optional_type(annotation):
             if arg == NoneType or is_optional_type(arg):
                 return True
     return False
+
+
+def none_int(value: str) -> Optional[int]:
+    return int(value) if value else None
+
+
+def get_values_from_enum(annotation):
+    origin_type = extract_type(annotation)
+    values = []
+
+    if not issubclass(origin_type, Enum):
+        return values
+
+    if is_optional_type(annotation):
+        values.append('')
+
+    for e in origin_type:
+        values.append(str(e.value))
+
+    return values

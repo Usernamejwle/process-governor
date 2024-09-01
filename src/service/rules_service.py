@@ -30,7 +30,6 @@ class RulesService(ABC):
     __ignore_pids: set[int] = {0, os.getpid()}
     __ignored_process_parameters: dict[Process, set[ProcessParameter]] = {}
     __force_pids: set[int] = set()
-    __scheduler = TaskScheduler()
 
     @classmethod
     def apply_rules(cls, config: Config, only_new: bool):
@@ -50,7 +49,7 @@ class RulesService(ABC):
         cls.__light_gc_ignored_process_parameters()
         cls.__force_pids = cls.__handle_processes(
             config,
-            ProcessesInfoService.get_list(only_new, cls.__force_pids)
+            ProcessesInfoService.get_processes(only_new, cls.__force_pids)
         )
 
     @classmethod
@@ -70,7 +69,7 @@ class RulesService(ABC):
                 force_pids.add(pid)
 
             if rule.delay > 0:
-                cls.__scheduler.schedule_task(process, cls.__handle_process, rule.delay, process, rule)
+                TaskScheduler.schedule_task(process, cls.__handle_process, rule.delay, process, rule)
             else:
                 cls.__handle_process(process, rule)
 
@@ -91,7 +90,7 @@ class RulesService(ABC):
                 if param in ignored_parameters:
                     continue
 
-                logger_string = f"{param.value} `{logger_value}` for {process.name} ({process.pid})"
+                logger_string = f"{param.value} `{logger_value}` for {process.process_name} ({process.pid})"
 
                 try:
                     if method(process, rule):
@@ -107,7 +106,7 @@ class RulesService(ABC):
     def __set_ionice(cls, process: Process, rule: ProcessRule | ServiceRule):
         io_priority = to_iopriority[rule.ioPriority]
 
-        if io_priority and process.ionice != io_priority:
+        if io_priority and process.io_priority != io_priority:
             process.process.ionice(io_priority)
             return True
 
@@ -115,7 +114,7 @@ class RulesService(ABC):
     def __set_nice(cls, process: Process, rule: ProcessRule | ServiceRule):
         priority = to_priority[rule.priority]
 
-        if priority and process.nice != priority:
+        if priority and process.priority != priority:
             process.process.nice(priority)
             return True
 
@@ -127,27 +126,25 @@ class RulesService(ABC):
 
     @classmethod
     def __first_rule_by_process(cls, config: Config, process: Process) -> Optional[ProcessRule | ServiceRule]:
-        service = process.service
-
-        if service:
+        if process.service:
             for rule in config.serviceRules:
-                value = service.name
+                value = process.service_name
 
                 if rule.selectorBy == SelectorType.PATH:
-                    value = service.binpath
+                    value = process.bin_path
                 elif rule.selectorBy == SelectorType.CMDLINE:
-                    value = process.cmdline
+                    value = process.cmd_line
 
                 if path_match(rule.selector, value):
                     return rule
 
         for rule in config.processRules:
-            value = process.name
+            value = process.process_name
 
             if rule.selectorBy == SelectorType.PATH:
-                value = process.binpath
+                value = process.bin_path
             elif rule.selectorBy == SelectorType.CMDLINE:
-                value = process.cmdline
+                value = process.cmd_line
 
             if path_match(rule.selector, value):
                 return rule

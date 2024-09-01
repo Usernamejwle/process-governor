@@ -1,52 +1,8 @@
 import logging
-import threading
 from contextlib import suppress
 from functools import wraps
 from time import time
 from typing import Callable, Optional, TypeVar
-
-from constants.log import LOG
-
-
-def run_in_thread(non_reentrant=True):
-    """
-    Decorator to run a function in a separate thread. Prevents re-entry of the function while it is still running.
-    Includes a method to check if the function is currently running.
-
-    Args:
-        non_reentrant (bool): If True, prevents re-invocation of the function while it is already running.
-    """
-
-    def decorator(func):
-        func._is_running = False
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            nonlocal func
-            if non_reentrant and func._is_running:
-                LOG.debug(f"Function {func.__name__} is already running.")
-                return
-
-            def run():
-                nonlocal func
-                try:
-                    func._is_running = True
-                    func(*args, **kwargs)
-                finally:
-                    func._is_running = False
-
-            thread = threading.Thread(target=run)
-            thread.start()
-
-        def is_running():
-            """Returns True if the function is currently running."""
-            return func._is_running
-
-        wrapper.is_running = is_running
-        return wrapper
-
-    return decorator
-
 
 T = TypeVar('T')
 
@@ -101,7 +57,8 @@ def cached(timeout_in_seconds, logged=False) -> Callable[..., T]:
     return decorator
 
 
-def suppress_exception(function: Callable[..., T], exceptions: tuple = (BaseException,), default_value_function: Callable[[], T] = lambda: None) -> Callable[..., T]:
+def suppress_exception(function: Callable[..., T], exceptions: tuple = (BaseException,),
+                       default_value_function: Callable[[], T] = lambda: None) -> Callable[..., T]:
     """
     Decorator that suppresses specified exceptions raised by a function.
 

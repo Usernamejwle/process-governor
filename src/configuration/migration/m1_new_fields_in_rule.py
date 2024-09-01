@@ -2,6 +2,8 @@ import itertools
 from typing import Optional
 
 from configuration.migration.base import BaseMigration
+from enums.bool import BoolStr
+from enums.selector import SelectorType
 
 
 class NewFieldsInRule(BaseMigration):
@@ -15,8 +17,11 @@ class NewFieldsInRule(BaseMigration):
 
     @staticmethod
     def migrate(config: dict) -> Optional[dict]:
-        for rule in itertools.chain(config.get('processRules', []), config.get('serviceRules', [])):
-            rule['selectorBy'] = 'Name'
-            rule['force'] = 'N'
+        for rule in config.get('processRules', []):
+            rule['selectorBy'] = SelectorType.NAME.value
+            rule['force'] = BoolStr.NO.value
+
+        for rule in config.get('serviceRules', []):
+            rule['force'] = BoolStr.NO.value
 
         return config

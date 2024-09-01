@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -24,12 +24,12 @@ class Config(BaseModel):
     Default is 1 second.
     """
 
-    processRules: List[ProcessRule] = Field(default_factory=list)
+    processRules: list[ProcessRule] = Field(default_factory=list)
     """
     A list of Rule objects that specify how application manages processes based on user-defined rules.
     """
 
-    serviceRules: List[ServiceRule] = Field(default_factory=list)
+    serviceRules: list[ServiceRule] = Field(default_factory=list)
     """
     A list of Rule objects that specify how application manages services based on user-defined rules.
     """

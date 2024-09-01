@@ -8,9 +8,9 @@ class BaseTab(ttk.Frame, ABC):
         super().__init__(master)
 
         self.master: Notebook = master
-        self.__icon_tab: PhotoImage = self.icon()
 
-        master.add(self, text=f" {self.title()} ", image=self.__icon_tab, compound=LEFT)
+    def add_tab_to_master(self):
+        self.master.add(self, text=f" {self.title()} ", image=self.icon(), compound=LEFT)
 
     @staticmethod
     @abstractmethod
@@ -25,6 +25,11 @@ class BaseTab(ttk.Frame, ABC):
     @staticmethod
     @abstractmethod
     def description() -> str:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def default_tooltip() -> str:
         pass
 
     @abstractmethod

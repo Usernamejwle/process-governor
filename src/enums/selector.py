@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class SelectorType(str, Enum):
+class SelectorType(StrEnum):
     NAME = "Name"
     PATH = "Path"
     CMDLINE = "CommandLine"
-
-    def __str__(self):
-        return str(self.value)
