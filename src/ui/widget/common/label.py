@@ -54,7 +54,6 @@ class RichLabel(Text):
         if text:
             self.configure(text=text)
 
-        self.bind("<FocusIn>", lambda e: self.focus_set(), '+')
         self.bind("<1>", lambda event: "break", '+')
         self.bind("<Double-1>", lambda event: "break", '+')
         self.bind("<Triple-1>", lambda event: "break", '+')
@@ -156,6 +155,7 @@ class RichLabel(Text):
 
 class Image(ttk.Label):
     def __init__(self, *args, image=None, **kwargs):
+        self._image = image
         super().__init__(*args, image=image, **kwargs)
 
     def config(self, *args, **kwargs):

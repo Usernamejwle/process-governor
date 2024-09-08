@@ -1,9 +1,10 @@
+from tkinter import Menu, LEFT
 from typing import Any
 
 from pydantic import BaseModel
 from pydantic.config import JsonDict
 
-from constants.resources import UI_ERROR
+from constants.resources import UI_ERROR, UI_DELETE, UI_REDO, UI_UNDO, UI_SELECT_ALL, UI_ADD
 from constants.ui import ERROR_ROW_COLOR, \
     ScrollableTreeviewEvents, CHANGED_ROW_COLOR, ExtendedTreeviewEvents
 from ui.widget.common.label import Image
@@ -31,8 +32,59 @@ class RulesList(EditableTreeview):
         self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._check_errors(), '+')
         self.bind(ScrollableTreeviewEvents.SCROLL, self._place_icons, '+')
         self.bind("<Configure>", lambda _: self.after(1, self._place_icons), '+')
-        self.bind("<Control-Key>", self._on_key_press_tree, "+")
-        self.bind("<Delete>", lambda _: self.delete_selected_rows(), "+")
+
+        self._setup_context_menu()
+
+    def _setup_context_menu(self):
+        history = self.history
+
+        self._context_menu_icons = icons = {
+            'del': load_img(UI_DELETE),
+            'undo': load_img(UI_UNDO),
+            'redo': load_img(UI_REDO),
+            'select_all': load_img(UI_SELECT_ALL),
+            'add': load_img(UI_ADD),
+        }
+        self._context_menu = menu = Menu(self, tearoff=0)
+
+        menu.add_command(
+            label="  Undo",
+            command=history.undo,
+            image=icons['undo'],
+            compound=LEFT,
+            accelerator="Ctrl+Z"
+        )
+        menu.add_command(
+            label="  Redo",
+            command=history.redo,
+            image=icons['redo'],
+            compound=LEFT,
+            accelerator="Ctrl+Shift+Z"
+        )
+        menu.add_separator()
+        menu.add_command(
+            label="  Add",
+            command=self.add_row,
+            image=icons['add'],
+            compound=LEFT,
+            accelerator="Ctrl+D"
+        )
+        menu.add_command(
+            label="  Select all",
+            command=self.select_all_rows,
+            image=icons['select_all'],
+            compound=LEFT,
+            accelerator="Ctrl+A"
+        )
+        menu.add_command(
+            label="  Delete",
+            command=self.delete_selected_rows,
+            image=icons['del'],
+            compound=LEFT,
+            accelerator="Del"
+        )
+
+        self.bind("<Button-3>", lambda event: menu.post(event.x_root, event.y_root), '+')
 
     def _errors(self) -> dict[Any, Any]:
         errors = [
@@ -120,12 +172,6 @@ class RulesList(EditableTreeview):
 
     def error_icon_created(self, icon, tooltip):
         pass
-
-    def _on_key_press_tree(self, event):
-        ctrl = (event.state & 0x4) != 0
-
-        if ctrl and event.keycode == ord('A'):
-            self.select_all_rows()
 
     def add_row(self, values=None, index=None):
         if not values:

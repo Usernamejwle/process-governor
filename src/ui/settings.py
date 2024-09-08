@@ -1,6 +1,8 @@
 import os
 from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, NORMAL, DISABLED
+from typing import Optional
 
+from configuration.migration.all_migration import run_all_migration
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
@@ -9,12 +11,15 @@ from constants.threads import THREAD_SETTINGS
 from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, EditableTreeviewEvents, \
     RIGHT_PACK, LEFT_PACK, OPEN_CONFIG_LABEL, OPEN_LOG_LABEL, ExtendedTreeviewEvents
 from ui.widget.common.button import ExtendedButton
+from ui.widget.common.entry import ExtendedEntry
 from ui.widget.settings.settings_tabs import SettingsTabs
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.process_list import ProcessListTab
 from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
+from ui.widget.settings.tabs.rules.rules_list import RulesList
 from ui.widget.settings.tooltip import Tooltip
 from util.files import open_config_file, open_log_file
+from util.history import HistoryManager
 from util.messages import yesno_error_box
 from util.scheduler import TaskScheduler
 from util.ui import load_img
@@ -28,10 +33,10 @@ class Settings(Tk):
         self._tooltip: Tooltip
         self._actions: SettingsActions
 
-        self._setup_window()
         self._create_widgets()
         self._pack()
         self._setup_tooltips()
+        self._setup_window()
 
     def _setup_window(self):
         self._center_window()
@@ -41,28 +46,70 @@ class Settings(Tk):
         self.title(APP_NAME_WITH_VERSION)
         self.minsize(*RC_WIN_SIZE)
 
-        self.bind_all("<Key>", self._on_key_release, "+")
+        self.bind("<Control-Tab>", lambda _: self._tabs.next_tab(), "+")
+        self.bind("<Shift-Control-Tab>", lambda _: self._tabs.prev_tab(), "+")
 
-    def _on_key_release(self, event):
+        self.bind("<Key>", self._fix_cyrillic_binds, "+")
+        self.bind("<KeyPress>", self._global_actions, "+")
+
+    def _fix_cyrillic_binds(self, event):
+        ctrl = (event.state & 0x4) != 0
+
+        if not ctrl:
+            return
+
+        keycode = event.keycode
+        keysym = event.keysym.upper()
+
+        if keysym != "??":
+            return
+
+        keysym = chr(keycode)
+        key_to_event = {
+            "X": "<<Cut>>",
+            "V": "<<Paste>>",
+            "C": "<<Copy>>",
+            "A": "<<SelectAll>>"
+        }
+
+        if keysym not in key_to_event:
+            return
+
+        self.focus_get().event_generate(key_to_event[keysym])
+
+    def _global_actions(self, event):
         ctrl = (event.state & 0x4) != 0
         shift = (event.state & 0x1) != 0
 
+        if not ctrl:
+            return
+
         keycode = event.keycode
-        widget = event.widget
         keysym = event.keysym.upper()
 
-        key_actions = {
-            ord('X'): "<<Cut>>",
-            ord('V'): "<<Paste>>",
-            ord('C'): "<<Copy>>",
-            ord('A'): "<<SelectAll>>",
-            # ord('Z'): "<<Undo>>" if not shift else "<<Redo>>",
-            # ord('Y'): "<<Redo>>",
+        if keysym == "??":
+            keysym = chr(keycode)
+
+        if shift:
+            key = ("Shift", keysym)
+        else:
+            key = (keysym,)
+
+        key_to_callback = {
+            ("D",): lambda: self._add_row(),
+            ("F",): lambda: self._search_focus(),
+
+            ("S",): lambda: self._save(),
+            ("Z",): lambda: self._history_shift(event, False),
+
+            ("Shift", "Z"): lambda: self._history_shift(event, True),
+            ("Y",): lambda: self._history_shift(event, True)
         }
 
-        if ctrl and keycode in key_actions and keysym == '??':
-            self.after(0, lambda: widget.event_generate(key_actions[keycode]))
-            # return 'break'
+        if key not in key_to_callback:
+            return
+
+        key_to_callback[key]()
 
     def _center_window(self):
         x = (self.winfo_screenwidth() // 2) - (RC_WIN_SIZE[0] // 2)
@@ -86,22 +133,19 @@ class Settings(Tk):
     def _create_actions(self):
         self._actions = actions = SettingsActions(self)
 
-        actions.bind(ActionEvents.APPLY, lambda _: self._apply(), "+")
-        actions.bind(ActionEvents.APPLY_N_CLOSE, lambda _: self._apply_and_close(), "+")
+        actions.bind(ActionEvents.SAVE, lambda _: self._save(), "+")
         actions.bind(ActionEvents.CONFIG, lambda _: open_config_file(), "+")
         actions.bind(ActionEvents.LOG, lambda _: open_log_file(), "+")
 
         self._update_actions_state()
 
-    def _apply_and_close(self):
-        self._on_window_closing(False)
-
-    def _apply(self):
+    def _save(self):
         result = self._tabs.save_data()
+        self._tabs._update_tabs_state()
         self._update_actions_state()
         return result
 
-    def _on_window_closing(self, ask_about_changes=True):
+    def _on_window_closing(self):
         has_error = self._tabs.has_error()
 
         if self._tabs.has_unsaved_changes():
@@ -113,17 +157,14 @@ class Settings(Tk):
                 if not result:
                     return
             else:
-                if ask_about_changes:
-                    message = ("There are unsaved changes. "
-                               "Do you want to save them before exiting?")
-                    result = messagebox.askyesnocancel(f"{APP_NAME_WITH_VERSION}", message)
-                else:
-                    result = True
+                message = ("There are unsaved changes. "
+                           "Do you want to save them before exiting?")
+                result = messagebox.askyesnocancel(f"{APP_NAME_WITH_VERSION}", message)
 
                 if result is None:
                     return
 
-                if result and not self._apply():
+                if result and not self._save():
                     return
         else:
             if has_error:
@@ -141,14 +182,12 @@ class Settings(Tk):
         tabs = self._tabs
         actions = self._actions
 
-        actions.apply["state"] = NORMAL if tabs.has_unsaved_changes() and not tabs.has_error() else DISABLED
-        actions.apply_n_close["state"] = actions.apply["state"]
+        actions.save["state"] = NORMAL if tabs.has_unsaved_changes() and not tabs.has_error() else DISABLED
 
     def _setup_tooltips(self):
         self._setup_tooltip(self._actions.open_config)
         self._setup_tooltip(self._actions.open_log)
-        self._setup_tooltip(self._actions.apply)
-        self._setup_tooltip(self._actions.apply_n_close)
+        self._setup_tooltip(self._actions.save)
 
         tabs = self._tabs
         tabs.bind("<Motion>", self._set_tooltip_by_tab, "+")
@@ -255,6 +294,43 @@ class Settings(Tk):
         self._tabs.pack(fill=BOTH, expand=True, padx=UI_PADDING, pady=UI_PADDING)
         self._actions.pack(fill=X, padx=UI_PADDING, pady=(0, UI_PADDING))
 
+    def _history_shift(self, event, is_redo):
+        widget = event.widget
+        tab = self._tabs.current_tab()
+        history: Optional[HistoryManager] = None
+
+        if isinstance(widget, ExtendedEntry):
+            history = widget.history
+        elif isinstance(tab, BaseRulesTab):
+            history = tab.rules_list.history
+
+        if history is None:
+            return
+
+        if is_redo:
+            history.redo()
+        else:
+            history.undo()
+
+    def _add_row(self):
+        tab = self._tabs.current_tab()
+
+        if not isinstance(tab, BaseRulesTab):
+            return
+
+        if not isinstance(self.focus_get(), RulesList):
+            return
+
+        tab.rules_list.add_row()
+
+    def _search_focus(self):
+        tab = self._tabs.current_tab()
+
+        if not isinstance(tab, ProcessListTab):
+            return
+
+        tab.actions.search.focus_set()
+
 
 class SettingsActions(ttk.Frame):
     def __init__(self, *args, **kwargs):
@@ -278,26 +354,17 @@ class SettingsActions(ttk.Frame):
             description="**Opens** the __log file__."
         )
 
-        self.apply = apply = ExtendedButton(
+        self.save = save = ExtendedButton(
             self,
-            text="Apply",
-            event=ActionEvents.APPLY,
+            text="Save",
+            event=ActionEvents.SAVE,
             image=load_img(file=UI_SAVE),
-            description="**Applies** the __settings__."
-        )
-
-        self.apply_n_close = apply_n_close = ExtendedButton(
-            self,
-            text="Apply & Close",
-            event=ActionEvents.APPLY_N_CLOSE,
-            image=load_img(file=UI_SAVE),
-            description="**Applies and Сloses** the __settings__."
+            description="**Saves** the __settings__. \n**Hotkey:** __Ctrl+S__."
         )
 
         open_config.pack(**LEFT_PACK)
         open_log.pack(**LEFT_PACK)
-        apply_n_close.pack(**RIGHT_PACK)
-        apply.pack(**RIGHT_PACK)
+        save.pack(**RIGHT_PACK)
 
 
 def open_settings():
@@ -325,5 +392,6 @@ def show_settings_error_message():
 
 
 if __name__ == "__main__":
+    run_all_migration()
     test_app = Settings()
     test_app.mainloop()

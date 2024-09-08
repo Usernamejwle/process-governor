@@ -9,7 +9,8 @@ class ScrollableTreeview(ExtendedTreeview):
         self._frame = ttk.Frame(master)
         self._scrollbar = ttk.Scrollbar(
             self._frame,
-            orient="vertical"
+            orient="vertical",
+            takefocus=0
         )
 
         super().__init__(self._frame, *args, **kwargs)

@@ -15,8 +15,8 @@ SETTINGS_TITLE = "Settings"
 OPEN_CONFIG_LABEL = "Open config file"
 OPEN_LOG_LABEL = "Open log file"
 
-CMENU_ADD_PROCESS_RULE_LABEL = " Add Process Rule"
-CMENU_ADD_SERVICE_RULE_LABEL = " Add Service Rule"
+CMENU_ADD_PROCESS_RULE_LABEL = "  Add Process Rule"
+CMENU_ADD_SERVICE_RULE_LABEL = "  Add Service Rule"
 
 
 class ActionEvents:
@@ -25,7 +25,7 @@ class ActionEvents:
     UP: Final[str] = "<<Up>>"
     DOWN: Final[str] = "<<Down>>"
     CANCEL: Final[str] = "<<Cancel>>"
-    APPLY: Final[str] = "<<Apply>>"
+    SAVE: Final[str] = "<<Save>>"
     APPLY_N_CLOSE: Final[str] = "<<ApplyAndClose>>"
     REFRESH: Final[str] = "<<Refresh>>"
     CONFIG: Final[str] = "<<Config>>"
@@ -36,6 +36,7 @@ class ActionEvents:
 
 class ExtendedTreeviewEvents:
     CHANGE: Final[str] = "<<Change>>"
+    BEFORE_CHANGE: Final[str] = "<<BeforeChange>>"
 
 
 class EditableTreeviewEvents:

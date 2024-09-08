@@ -47,11 +47,12 @@ class BaseRulesTab(BaseTab, ABC):
 
     def _create_actions(self):
         actions = RulesTabActions(self)
+        rules_list = self.rules_list
 
-        actions.bind(ActionEvents.ADD, lambda _: self.rules_list.add_row(), "+")
-        actions.bind(ActionEvents.DELETE, lambda _: self.rules_list.delete_selected_rows(), "+")
-        actions.bind(ActionEvents.UP, lambda _: self.rules_list.move_rows_up(), "+")
-        actions.bind(ActionEvents.DOWN, lambda _: self.rules_list.move_rows_down(), "+")
+        actions.bind(ActionEvents.ADD, lambda _: rules_list.add_row(), "+")
+        actions.bind(ActionEvents.DELETE, lambda _: rules_list.delete_selected_rows(), "+")
+        actions.bind(ActionEvents.UP, lambda _: rules_list.move_rows_up(), "+")
+        actions.bind(ActionEvents.DOWN, lambda _: rules_list.move_rows_down(), "+")
 
         return actions
 
@@ -77,6 +78,7 @@ class BaseRulesTab(BaseTab, ABC):
 
     def load_from_config(self, config: dict):
         self.rules_list.set_data(config.get(self.rule_type.field_in_config, []))
+        self.rules_list.history.clear()
 
     def save_to_config(self, config: dict):
         rules_list = self.rules_list
@@ -103,7 +105,7 @@ class RulesTabActions(ttk.Frame):
             text="Add",
             event=ActionEvents.ADD,
             image=load_img(file=UI_ADD),
-            description="**Adds** a rule before the current."
+            description="**Adds** a rule before the current. \n**Hotkey:** __Ctrl+D__."
         )
 
         self.delete = delete = ExtendedButton(
@@ -111,7 +113,7 @@ class RulesTabActions(ttk.Frame):
             text="Del",
             event=ActionEvents.DELETE,
             image=load_img(file=UI_DELETE),
-            description="**Deletes** the selected rules."
+            description="**Deletes** the selected rules. \n**Hotkey:** __Del__."
         )
 
         self.move_up = move_up = ExtendedButton(

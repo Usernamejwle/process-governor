@@ -1,4 +1,3 @@
-import itertools
 from typing import Optional
 
 from configuration.migration.base import BaseMigration

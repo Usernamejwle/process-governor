@@ -128,23 +128,20 @@ class RulesService(ABC):
     def __first_rule_by_process(cls, config: Config, process: Process) -> Optional[ProcessRule | ServiceRule]:
         if process.service:
             for rule in config.serviceRules:
-                value = process.service_name
-
-                if rule.selectorBy == SelectorType.PATH:
-                    value = process.bin_path
-                elif rule.selectorBy == SelectorType.CMDLINE:
-                    value = process.cmd_line
-
-                if path_match(rule.selector, value):
+                if path_match(rule.selector, process.service_name):
                     return rule
 
         for rule in config.processRules:
-            value = process.process_name
-
-            if rule.selectorBy == SelectorType.PATH:
+            if rule.selectorBy == SelectorType.NAME:
+                value = process.process_name
+            elif rule.selectorBy == SelectorType.PATH:
                 value = process.bin_path
             elif rule.selectorBy == SelectorType.CMDLINE:
                 value = process.cmd_line
+            else:
+                message = f"Unknown selector type: {rule.selectorBy}"
+                LOG.error(message)
+                raise ValueError(message)
 
             if path_match(rule.selector, value):
                 return rule

@@ -19,6 +19,7 @@ class ExtendedButton(ttk.Button):
             compound=None,
             **kwargs
     ):
+        self._image = image
         self._font = get_button_font()
         self.description = description
 

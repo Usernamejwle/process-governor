@@ -1,5 +1,4 @@
 import tkinter
-from functools import cache
 from tkinter import font, Widget, Entry, PhotoImage
 from tkinter.font import Font
 from tkinter.ttk import Treeview
@@ -34,7 +33,6 @@ def get_parent_with_bg(widget: Widget):
     return None
 
 
-@cache
 def get_label_font():
     temp_widget = tkinter.Label()
     default_font = font.nametofont(temp_widget.cget("font"))
@@ -42,17 +40,14 @@ def get_label_font():
     return default_font
 
 
-@cache
 def get_default_font():
     return Font(family="TkDefaultFont")
 
 
-@cache
 def single_font_width():
     return get_default_font().measure('0')
 
 
-@cache
 def get_button_font():
     temp_widget = tkinter.Button()
     default_font = font.nametofont(temp_widget.cget("font"))
@@ -60,7 +55,6 @@ def get_button_font():
     return default_font
 
 
-@cache
 def get_combobox_font():
     temp_widget = tkinter.Button()
     default_font = font.nametofont(temp_widget.cget("font"))
@@ -68,13 +62,12 @@ def get_combobox_font():
     return default_font
 
 
-@cache
 def get_entry_font():
     temp_entry = Entry()
     default_font = temp_entry.cget("font")
     temp_entry.destroy()
     return default_font
 
-@cache
+
 def load_img(file) -> PhotoImage:
     return PhotoImage(file=file)

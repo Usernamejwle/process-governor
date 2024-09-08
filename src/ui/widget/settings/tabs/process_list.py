@@ -1,10 +1,10 @@
 import textwrap
-from tkinter import PhotoImage, ttk, X, BOTH, NORMAL, DISABLED, CENTER, Menu, LEFT, END
+from tkinter import PhotoImage, ttk, X, BOTH, NORMAL, DISABLED, CENTER, Menu, END, LEFT
 from tkinter.ttk import Notebook
 from typing import Optional
 
 from constants.log import LOG
-from constants.resources import UI_PROCESS_LIST, UI_REFRESH
+from constants.resources import UI_PROCESS_LIST, UI_REFRESH, UI_ADD_PROCESS_RULE, UI_ADD_SERVICE_RULE
 from constants.threads import THREAD_PROCESS_LIST
 from constants.ui import UI_PADDING, ActionEvents, LEFT_PACK, CMENU_ADD_PROCESS_RULE_LABEL, \
     CMENU_ADD_SERVICE_RULE_LABEL
@@ -50,6 +50,9 @@ class ProcessListTab(BaseTab):
 
         super().__init__(master)
 
+        self._is_close = False
+        self.bind("<Destroy>", self._on_close)
+
         self._setup_widgets()
         self._loader = PydanticTreeviewLoader(self.process_list, self.model)
         self._pack()
@@ -57,13 +60,11 @@ class ProcessListTab(BaseTab):
 
     def _create_process_list(self):
         columns = [key for key, field_info in self.model.model_fields.items() if not field_info.exclude]
+        treeview = SortableTreeview(self, show='headings', columns=columns, selectmode="browse")
 
-        return SortableTreeview(
-            self,
-            show='headings',
-            columns=columns,
-            selectmode="browse"
-        )
+        treeview.bind("<F5>", lambda _: self._refresh(), "+")
+
+        return treeview
 
     def _create_progress_bar(self):
         progress_bar = ttk.Progressbar(self.process_list, mode='indeterminate')
@@ -116,46 +117,58 @@ class ProcessListTab(BaseTab):
 
         process_list['displaycolumns'] = display_columns
 
+    def _on_close(self, _=None):
+        self._is_close = True
+
     def _refresh(self):
+        main_thread_not_in_mainloop_message = 'main thread is not in main loop'
+
         try:
             self._refresh_state(True)
             self.process_list.clear()
 
             def load():
                 try:
-                    def set_data(data):
-                        try:
-                            self._data = data
-                            self._update_process_list()
-                        except:
-                            LOG.exception("Refresh error")
-                        finally:
-                            self._refresh_state(False)
+                    try:
+                        self._data = ProcessesInfoService.get_processes(False)
 
-                    values = ProcessesInfoService.get_processes(False)
-                    self.after(0, set_data, values)
-                except:
-                    self._refresh_state(False)
-                    LOG.exception("Refresh error")
+                        def do_ui_update():
+                            if self._is_close:
+                                return
+
+                            try:
+                                try:
+                                    self._update_process_list()
+                                finally:
+                                    self._refresh_state()
+                            except BaseException as e:
+                                if str(e) != main_thread_not_in_mainloop_message:
+                                    LOG.exception("Refresh error")
+
+                        if self._is_close:
+                            return
+
+                        self.after(0, do_ui_update)
+                    finally:
+                        self._refresh_state()
+                except BaseException as e:
+                    if str(e) != main_thread_not_in_mainloop_message:
+                        LOG.exception("Refresh error")
 
             TaskScheduler.schedule_task(THREAD_PROCESS_LIST, load)
         except:
-            self._refresh_state(False)
+            self._refresh_state()
             LOG.exception("Refresh error")
 
-    def _refresh_state(self, lock: bool):
-        try:
-            actions = self.actions
-            actions.refresh['state'] = DISABLED if lock else NORMAL
+    def _refresh_state(self, lock: bool = False):
+        actions = self.actions
+        actions.refresh['state'] = DISABLED if lock else NORMAL
 
-            progress_bar = self._progress_bar
-            if lock:
-                progress_bar.place(relx=0.5, rely=0.5, anchor=CENTER)
-            else:
-                progress_bar.place_forget()
-        except:
-            # When the window was closed while getting the process list
-            pass
+        progress_bar = self._progress_bar
+        if lock:
+            progress_bar.place(relx=0.5, rely=0.5, anchor=CENTER)
+        else:
+            progress_bar.place_forget()
 
     def save_to_config(self, config: dict):
         pass
@@ -181,17 +194,25 @@ class ProcessListTab(BaseTab):
     def _setup_context_menu(self):
         process_list = self.process_list
 
-        self._context_menu = context_menu = Menu(process_list, tearoff=0)
-        self._process_menu = Menu(context_menu, tearoff=0)
+        self._context_menu_icons = icons = {
+            CMENU_ADD_PROCESS_RULE_LABEL: load_img(UI_ADD_PROCESS_RULE),
+            CMENU_ADD_SERVICE_RULE_LABEL: load_img(UI_ADD_SERVICE_RULE),
+        }
+        self._context_menu = menu = Menu(process_list, tearoff=0)
+        self._process_menu = Menu(menu, tearoff=0)
 
-        context_menu.add_cascade(
+        menu.add_cascade(
             label=CMENU_ADD_PROCESS_RULE_LABEL,
-            menu=self._process_menu
+            menu=self._process_menu,
+            image=icons[CMENU_ADD_PROCESS_RULE_LABEL],
+            compound=LEFT
         )
 
-        context_menu.add_command(
+        menu.add_command(
             label=CMENU_ADD_SERVICE_RULE_LABEL,
-            command=lambda: self._add_rule(RuleType.SERVICE)
+            command=lambda: self._add_rule(RuleType.SERVICE),
+            image=icons[CMENU_ADD_SERVICE_RULE_LABEL],
+            compound=LEFT
         )
 
         process_list.bind("<Button-3>", self._show_context_menu, '+')
@@ -244,7 +265,7 @@ class ProcessListTab(BaseTab):
 
     def _add_rule(self, rule_type: RuleType, selector_type: Optional[SelectorType] = None):
         if rule_type == RuleType.SERVICE and selector_type is not None:
-            raise ValueError("rule_type == RuleType.SERVICE and selector_type is not None")
+            raise ValueError("selector_type must be None when rule_type is SERVICE")
 
         process_list = self.process_list
         row_id = process_list.selection()
@@ -286,10 +307,10 @@ class ProcessListTabActions(ttk.Frame):
     def _setup_btn(self):
         self.refresh = refresh = ExtendedButton(
             self,
-            # text="Refresh",
+            text="Refresh",
             event=ActionEvents.REFRESH,
             image=load_img(file=UI_REFRESH),
-            description="**Refreshes** the list of __processes__."
+            description="**Refreshes** the list of __processes__. \n**Hotkey:** __F5__."
         )
 
         self.filterByType = filterByType = EnumCombobox(
@@ -319,7 +340,7 @@ class ProcessListTabActions(ttk.Frame):
         if self._search_delay_timer:
             self.after_cancel(self._search_delay_timer)
 
-        self._search_delay_timer = self.after(250, self._trigger_search_change_event)
+        self._search_delay_timer = self.after(125, self._trigger_search_change_event)
 
     def _trigger_search_change_event(self):
         self.event_generate(ActionEvents.SEARCH_CHANGE)

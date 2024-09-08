@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from tkinter import PhotoImage, ttk
+from tkinter import PhotoImage, ttk, LEFT
 from tkinter.ttk import Notebook
 
 
@@ -49,4 +49,6 @@ class BaseTab(ttk.Frame, ABC):
     def has_error(self) -> bool:
         pass
 
-
+    def place(self):
+        self._icon = self.icon()
+        self.master.add(self, text=f" {self.title()}", image=self._icon, compound=LEFT)

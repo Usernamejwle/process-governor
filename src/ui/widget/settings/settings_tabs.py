@@ -1,4 +1,4 @@
-from tkinter import ttk, messagebox, LEFT
+from tkinter import ttk, messagebox
 from typing import Optional
 
 from constants.app_info import APP_NAME_WITH_VERSION
@@ -34,9 +34,9 @@ class SettingsTabs(ttk.Notebook):
             service_rules_tab.rules_list
         )
 
-        self._add_tab(process_list_tab)
-        self._add_tab(process_rules_tab)
-        self._add_tab(service_rules_tab)
+        process_list_tab.place()
+        process_rules_tab.place()
+        service_rules_tab.place()
 
     def current_tab(self) -> BaseTab:
         current_index = self.index(self.select())
@@ -100,12 +100,19 @@ class SettingsTabs(ttk.Notebook):
     def get_default_tooltip(self):
         return self.current_tab().default_tooltip()
 
-    def _add_tab(self, tab: BaseTab):
-        self.add(tab, text=f" {tab.title()}", image=tab.icon(), compound=LEFT)
-
     def _update_tabs_state(self):
         tabs = self.frames_by_tab()
 
         for id, tab in tabs.items():
             star = "*" if tab.has_changes() or tab.has_error() else ""
             self.tab(id, text=f" {tab.title()} {star}")
+
+    def next_tab(self):
+        current_tab = self.index(self.select())
+        next_tab = (current_tab + 1) % self.index("end")
+        self.select(next_tab)
+
+    def prev_tab(self):
+        current_tab = self.index(self.select())
+        next_tab = (current_tab - 1) % self.index("end")
+        self.select(next_tab)
