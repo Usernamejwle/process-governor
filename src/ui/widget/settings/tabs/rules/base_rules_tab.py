@@ -1,14 +1,12 @@
 from abc import ABC
-from tkinter import ttk, X, BOTH, NORMAL, DISABLED
+from tkinter import X, BOTH, NORMAL, DISABLED
 from tkinter.ttk import Notebook
 
-from constants.resources import UI_ADD, UI_DELETE, UI_UP, UI_DOWN
-from constants.ui import UI_PADDING, ActionEvents, LEFT_PACK, ExtendedTreeviewEvents
+from constants.ui import UI_PADDING, ActionEvents, ExtendedTreeviewEvents
 from enums.rules import RuleType
-from ui.widget.common.button import ExtendedButton
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.rules.rules_list import RulesList
-from util.ui import load_img
+from ui.widget.settings.tabs.rules.rules_list_actions import RulesListActions
 
 
 class BaseRulesTab(BaseTab, ABC):
@@ -46,7 +44,7 @@ class BaseRulesTab(BaseTab, ABC):
         return rules_list
 
     def _create_actions(self):
-        actions = RulesTabActions(self)
+        actions = RulesListActions(self)
         rules_list = self.rules_list
 
         actions.bind(ActionEvents.ADD, lambda _: rules_list.add_row(), "+")
@@ -92,47 +90,3 @@ class BaseRulesTab(BaseTab, ABC):
 
     def has_error(self) -> bool:
         return self.rules_list.has_error()
-
-
-class RulesTabActions(ttk.Frame):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._setup_btn()
-
-    def _setup_btn(self):
-        self.add = add = ExtendedButton(
-            self,
-            text="Add",
-            event=ActionEvents.ADD,
-            image=load_img(file=UI_ADD),
-            description="**Adds** a rule before the current. \n**Hotkey:** __Ctrl+D__."
-        )
-
-        self.delete = delete = ExtendedButton(
-            self,
-            text="Del",
-            event=ActionEvents.DELETE,
-            image=load_img(file=UI_DELETE),
-            description="**Deletes** the selected rules. \n**Hotkey:** __Del__."
-        )
-
-        self.move_up = move_up = ExtendedButton(
-            self,
-            text="Up",
-            event=ActionEvents.UP,
-            image=load_img(file=UI_UP),
-            description="**Moves** the current rule __up__."
-        )
-
-        self.move_down = move_down = ExtendedButton(
-            self,
-            text="Down",
-            event=ActionEvents.DOWN,
-            image=load_img(file=UI_DOWN),
-            description="**Moves** the current rule __down__."
-        )
-
-        add.pack(**LEFT_PACK)
-        delete.pack(**LEFT_PACK)
-        move_up.pack(**LEFT_PACK)
-        move_down.pack(**LEFT_PACK)

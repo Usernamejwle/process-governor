@@ -14,7 +14,7 @@ from ui.widget.common.button import ExtendedButton
 from ui.widget.common.entry import ExtendedEntry
 from ui.widget.settings.settings_tabs import SettingsTabs
 from ui.widget.settings.tabs.base_tab import BaseTab
-from ui.widget.settings.tabs.process_list import ProcessListTab
+from ui.widget.settings.tabs.processes.process_tab import ProcessesTab
 from ui.widget.settings.tabs.rules.base_rules_tab import BaseRulesTab
 from ui.widget.settings.tabs.rules.rules_list import RulesList
 from ui.widget.settings.tooltip import Tooltip
@@ -194,7 +194,7 @@ class Settings(Tk):
         tabs.bind("<Leave>", lambda _: self._tooltip.set(self._tabs.get_default_tooltip()), "+")
 
         for tab in tabs.frames():
-            tab: BaseRulesTab | ProcessListTab
+            tab: BaseRulesTab | ProcessesTab
             actions = tab.actions
 
             if isinstance(tab, BaseRulesTab):
@@ -209,7 +209,7 @@ class Settings(Tk):
                 rules_list.error_icon_created = lambda icon, tooltip: self._setup_tooltip(icon, tooltip, True, False)
                 self._setup_tooltip(rules_list, "", enter=False)
 
-            if isinstance(tab, ProcessListTab):
+            if isinstance(tab, ProcessesTab):
                 self._setup_tooltip(actions.refresh)
                 self._setup_tooltip(actions.filterByType)
                 self._setup_tooltip(actions.search)
@@ -247,7 +247,7 @@ class Settings(Tk):
         if isinstance(tab, BaseRulesTab):
             treeview = tab.rules_list
 
-        if isinstance(tab, ProcessListTab):
+        if isinstance(tab, ProcessesTab):
             treeview = tab.process_list
 
         if treeview is None:
@@ -326,7 +326,7 @@ class Settings(Tk):
     def _search_focus(self):
         tab = self._tabs.current_tab()
 
-        if not isinstance(tab, ProcessListTab):
+        if not isinstance(tab, ProcessesTab):
             return
 
         tab.actions.search.focus_set()

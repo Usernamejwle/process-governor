@@ -6,8 +6,8 @@ from constants.log import LOG
 from constants.ui import ExtendedTreeviewEvents
 from service.config_service import ConfigService
 from ui.widget.settings.tabs.base_tab import BaseTab
-from ui.widget.settings.tabs.process_list import ProcessListTab
-from ui.widget.settings.tabs.rules.rules_tab import ServiceRulesTab, ProcessRulesTab
+from ui.widget.settings.tabs.processes.process_tab import ProcessesTab
+from ui.widget.settings.tabs.rules.rules_tabs import ServiceRulesTab, ProcessRulesTab
 
 
 class SettingsTabs(ttk.Notebook):
@@ -28,7 +28,7 @@ class SettingsTabs(ttk.Notebook):
     def _create_tabs(self):
         process_rules_tab = ProcessRulesTab(self)
         service_rules_tab = ServiceRulesTab(self)
-        process_list_tab = ProcessListTab(
+        process_list_tab = ProcessesTab(
             self,
             process_rules_tab.rules_list,
             service_rules_tab.rules_list
