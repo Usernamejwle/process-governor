@@ -41,7 +41,7 @@ PyInstaller.__main__.run([
     '--onedir',  # Build the app in one directory
     '--uac-admin',  # Request admin rights on launch
     '--hide-console', 'hide-early',  # Hide the console on startup
-    '--add-data', './resources/*;./resources',  # Add additional resources
+    '--add-data', './resources/;./resources',  # Add additional resources
     '--contents-directory', 'scripts',  # Directory for Python and app scripts in the built package
     '--icon', 'resources/app.ico',  # Application icon
     '--debug', 'noarchive',  # Disables bundling of application scripts inside the exe
