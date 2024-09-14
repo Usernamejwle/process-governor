@@ -17,8 +17,7 @@ _anchor_mapping = {
 
 
 class PydanticTreeviewLoader:
-    def \
-            __init__(self, treeview: ExtendedTreeview, model: type[BaseModel]):
+    def __init__(self, treeview: ExtendedTreeview, model: type[BaseModel]):
         self._treeview = treeview
         self._model = model
         self._original_data = []

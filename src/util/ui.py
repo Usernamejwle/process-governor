@@ -1,7 +1,10 @@
+import textwrap
 import tkinter
 from tkinter import font, Widget, Entry, PhotoImage
 from tkinter.font import Font
 from tkinter.ttk import Treeview
+
+from constants.ui import TRIM_LENGTH_OF_ITEM_IN_CONTEXT_MENU
 
 
 def state(widget: Widget) -> str:
@@ -71,3 +74,7 @@ def get_entry_font():
 
 def load_img(file) -> PhotoImage:
     return PhotoImage(file=file)
+
+
+def trim_cmenu_label(text: str) -> str:
+    return textwrap.shorten(text, width=TRIM_LENGTH_OF_ITEM_IN_CONTEXT_MENU, placeholder="...")

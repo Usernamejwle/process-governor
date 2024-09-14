@@ -74,7 +74,13 @@ class ExtendedTreeview(ttk.Treeview):
 
         # noinspection PyTypeChecker
         column_name: Optional[str] = self.column(column_id, 'id') if column_id else None
-        cell_value: str = self.set(row_id, column_id) if column_id and row_id else ''
+        cell_value: str = ''
+
+        if column_id and row_id:
+            if column_id == '#0':
+                cell_value = self.item(row_id, 'text')
+            else:
+                cell_value = self.set(row_id, column_id)
 
         if column_name == '':
             column_name = None

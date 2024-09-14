@@ -1,6 +1,8 @@
 from tkinter import Tk, BOTH
 
+from constants.resources import UI_SORT_UP, UI_SORT_DOWN, UI_SORT_EMPTY
 from ui.widget.common.treeview.scrollable import ScrollableTreeview
+from util.ui import load_img
 
 
 class SortableTreeview(ScrollableTreeview):
@@ -8,11 +10,18 @@ class SortableTreeview(ScrollableTreeview):
         super().__init__(master, *args, **kwargs, hand_on_title=True)
         self._sort_column_name = None
         self._sort_reverse = False
+
+        self._sort_up_icon = load_img(UI_SORT_UP)
+        self._sort_down_icon = load_img(UI_SORT_DOWN)
+        self._sort_empty_icon = load_img(UI_SORT_EMPTY)
+
         self._setup_sorting()
 
     def _setup_sorting(self):
         for column_name in self["columns"]:
             self.heading(column_name, command=lambda c=column_name: self._on_heading_click(c))
+
+        self._update_heading_text()
 
     def _on_heading_click(self, column):
         if self._sort_column_name == column:
@@ -40,26 +49,22 @@ class SortableTreeview(ScrollableTreeview):
 
     @staticmethod
     def _get_value_as_type(value):
+        if not value:
+            return value
+
         if value.replace('.', '', 1).isdigit():
             return float(value) if '.' in value else int(value)
-        return value
+
+        return str.lower(value)
 
     def _update_heading_text(self):
-        up = '⭡'
-        down = '⭣'
-        sort_symbol = up if self._sort_reverse else down
+        sort_icon = self._sort_up_icon if self._sort_reverse else self._sort_down_icon
 
         for column_name in self["columns"]:
-            title = self.heading(column_name, 'text')
-            title = (title
-                     .replace(up, '')
-                     .replace(down, '')
-                     .strip())
-
             if column_name == self._sort_column_name:
-                title = f"  {title} {sort_symbol}"
-
-            self.heading(column_name, text=title)
+                self.heading(column_name, image=sort_icon)
+            else:
+                self.heading(column_name, image=self._sort_empty_icon)
 
     def sort_column_name(self, column_name):
         self._sort_column_name = column_name

@@ -22,8 +22,15 @@ UI_LOG: Final[str] = f"{APP_PATH}/resources/UI/log.png"
 UI_REDO: Final[str] = f"{APP_PATH}/resources/UI/redo.png"
 UI_UNDO: Final[str] = f"{APP_PATH}/resources/UI/undo.png"
 UI_SELECT_ALL: Final[str] = f"{APP_PATH}/resources/UI/select-all.png"
+UI_COPY: Final[str] = f"{APP_PATH}/resources/UI/copy.png"
+UI_SERVICE: Final[str] = f"{APP_PATH}/resources/UI/service.png"
+UI_PROCESS: Final[str] = f"{APP_PATH}/resources/UI/process.png"
 
 UI_INFO_TOOLTIP: Final[str] = f"{APP_PATH}/resources/UI/info-tooltip.png"
 UI_WARN_TOOLTIP: Final[str] = f"{APP_PATH}/resources/UI/warn-tooltip.png"
 
 UI_ERROR: Final[str] = f"{APP_PATH}/resources/UI/error.png"
+
+UI_SORT_UP: Final[str] = f"{APP_PATH}/resources/UI/sort-up.png"
+UI_SORT_DOWN: Final[str] = f"{APP_PATH}/resources/UI/sort-down.png"
+UI_SORT_EMPTY: Final[str] = f"{APP_PATH}/resources/UI/sort-empty.png"

@@ -6,6 +6,12 @@ from re import Pattern
 from types import NoneType
 from typing import get_origin, get_args, Union, Annotated, Optional
 
+import win32api
+import win32con
+import win32gui
+import win32ui
+from PIL import Image
+
 
 @cache
 def path_pattern_to_regex(pattern: str) -> Optional[Pattern]:
@@ -153,3 +159,77 @@ def get_values_from_enum(annotation):
         values.append(str(e.value))
 
     return values
+
+
+def get_icon_from_exe(exe_path, icon_index=0, large=False, try_load_another_if_absent=True):
+    if large:
+        icon_size = (
+            win32api.GetSystemMetrics(win32con.SM_CXICON),
+            win32api.GetSystemMetrics(win32con.SM_CYICON)
+        )
+    else:
+        icon_size = (
+            win32api.GetSystemMetrics(win32con.SM_CXSMICON),
+            win32api.GetSystemMetrics(win32con.SM_CYSMICON)
+        )
+
+    hdc = None
+    hdc_mem = None
+    bmp = None
+    list_of_large_hicon = []
+    list_of_small_hicon = []
+
+    try:
+        list_of_large_hicon, list_of_small_hicon = win32gui.ExtractIconEx(exe_path, icon_index)
+        list_of_hicon = list_of_large_hicon if large else list_of_small_hicon
+
+        if not list_of_hicon:
+            return
+
+        hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+        hdc_mem = hdc.CreateCompatibleDC()
+
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(hdc, icon_size[0], icon_size[1])
+
+        hdc_mem.SelectObject(bmp)
+
+        win32gui.DrawIconEx(
+            hdc_mem.GetSafeHdc(),
+            0,
+            0,
+            list_of_hicon[0],
+            icon_size[0],
+            icon_size[1],
+            0,
+            None,
+            win32con.DI_NORMAL
+        )
+
+        bmp_info = bmp.GetInfo()
+        bmp_bits = bmp.GetBitmapBits(True)
+
+        return Image.frombuffer(
+            'RGBA',
+            (bmp_info['bmWidth'], bmp_info['bmHeight']),
+            bmp_bits, 'raw', 'BGRA', 0, 1
+        )
+    finally:
+        if bmp:
+            handle = bmp.GetHandle()
+
+            if handle:
+                win32gui.DeleteObject(handle)
+
+        if hdc_mem:
+            hdc_mem.DeleteDC()
+
+        if hdc:
+            hdc.DeleteDC()
+            win32gui.ReleaseDC(0, hdc.GetSafeHdc())
+
+        for hicon in list_of_large_hicon:
+            win32gui.DestroyIcon(hicon)
+
+        for hicon in list_of_small_hicon:
+            win32gui.DestroyIcon(hicon)

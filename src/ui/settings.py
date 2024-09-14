@@ -255,7 +255,7 @@ class Settings(Tk):
 
         cell = treeview.get_cell_info_by_event(event)
 
-        if cell.region == 'heading':
+        if cell.region == 'heading' and cell.column_name:
             self._tooltip.set(tab.model.model_fields[cell.column_name].description)
         else:
             self._tooltip.set(self._tabs.get_default_tooltip())
@@ -269,7 +269,7 @@ class Settings(Tk):
         rules_list = tab.rules_list
         editor = rules_list.editor()
 
-        if not editor:
+        if not editor or not editor.cell.column_name:
             return
 
         self._setup_tooltip(

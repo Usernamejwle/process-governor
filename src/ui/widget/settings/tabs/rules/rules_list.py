@@ -5,8 +5,7 @@ from pydantic import BaseModel
 from pydantic.config import JsonDict
 
 from constants.resources import UI_ERROR, UI_DELETE, UI_REDO, UI_UNDO, UI_SELECT_ALL, UI_ADD
-from constants.ui import ERROR_ROW_COLOR, \
-    ScrollableTreeviewEvents, CHANGED_ROW_COLOR, ExtendedTreeviewEvents
+from constants.ui import ERROR_ROW_COLOR, ScrollableTreeviewEvents, ExtendedTreeviewEvents
 from ui.widget.common.label import Image
 from ui.widget.common.treeview.editable import EditableTreeview
 from ui.widget.common.treeview.pydantic import PydanticTreeviewLoader
@@ -27,7 +26,6 @@ class RulesList(EditableTreeview):
         self._error_icons: dict[tuple[str, str], Image] = {}
 
         self.tag_configure("error", background=ERROR_ROW_COLOR)
-        self.tag_configure("changed", background=CHANGED_ROW_COLOR)
 
         self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._check_errors(), '+')
         self.bind(ScrollableTreeviewEvents.SCROLL, self._place_icons, '+')
