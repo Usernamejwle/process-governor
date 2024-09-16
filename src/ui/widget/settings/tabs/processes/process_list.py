@@ -7,16 +7,17 @@ from pydantic import BaseModel
 
 from constants.log import LOG
 from constants.resources import UI_ADD_PROCESS_RULE, UI_ADD_SERVICE_RULE, UI_COPY, UI_SERVICE, \
-    UI_PROCESS
+    UI_PROCESS, UI_OPEN_FOLDER
 from constants.threads import THREAD_PROCESS_LIST_ICONS
 from constants.ui import CMENU_ADD_PROCESS_RULE_LABEL, CMENU_ADD_SERVICE_RULE_LABEL, COLUMN_WIDTH_WITH_ICON, \
-    CMENU_COPY_LABEL, ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE
+    CMENU_COPY_LABEL, ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE, CMENU_OPEN_PROCESS_FOLDER
 from enums.filters import FilterByProcessType
 from enums.rules import RuleType
 from enums.selector import SelectorType
 from model.process import Process
 from ui.widget.common.treeview.pydantic import PydanticTreeviewLoader
 from ui.widget.common.treeview.sortable import SortableTreeview
+from util.files import explore
 from util.scheduler import TaskScheduler
 from util.ui import load_img, trim_cmenu_label
 from util.utils import get_icon_from_exe
@@ -62,6 +63,7 @@ class ProcessList(SortableTreeview):
             CMENU_ADD_PROCESS_RULE_LABEL: load_img(UI_ADD_PROCESS_RULE),
             CMENU_ADD_SERVICE_RULE_LABEL: load_img(UI_ADD_SERVICE_RULE),
             CMENU_COPY_LABEL: load_img(UI_COPY),
+            CMENU_OPEN_PROCESS_FOLDER: load_img(UI_OPEN_FOLDER),
         }
         self._context_menu = menu = Menu(self, tearoff=0)
         self._process_menu = Menu(menu, tearoff=0)
@@ -90,7 +92,23 @@ class ProcessList(SortableTreeview):
             compound=LEFT
         )
 
+        menu.add_command(
+            label=CMENU_OPEN_PROCESS_FOLDER,
+            command=self._open_process_folder,
+            image=icons[CMENU_OPEN_PROCESS_FOLDER],
+            compound=LEFT
+        )
+
         self.bind("<Button-3>", self._show_context_menu, '+')
+
+    def _open_process_folder(self):
+        selected_item = self.selection()
+
+        if not selected_item:
+            return
+
+        row = self.as_model(selected_item[0])
+        explore(row.bin_path)
 
     def _show_context_menu(self, event):
         context_menu = self._context_menu
@@ -105,6 +123,8 @@ class ProcessList(SortableTreeview):
 
             self._context_menu.entryconfig(CMENU_ADD_PROCESS_RULE_LABEL, state=NORMAL if process_exists else DISABLED)
             self._context_menu.entryconfig(CMENU_ADD_SERVICE_RULE_LABEL, state=NORMAL if row.service else DISABLED)
+            self._context_menu.entryconfig(CMENU_OPEN_PROCESS_FOLDER,
+                                           state=NORMAL if os.path.isfile(row.bin_path or '') else DISABLED)
 
             context_menu.post(event.x_root, event.y_root)
 

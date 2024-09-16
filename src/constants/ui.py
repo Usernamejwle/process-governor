@@ -19,6 +19,7 @@ OPEN_LOG_LABEL = "Open log file"
 CMENU_ADD_PROCESS_RULE_LABEL = "  Add Process Rule"
 CMENU_ADD_SERVICE_RULE_LABEL = "  Add Service Rule"
 CMENU_COPY_LABEL = "  Copy Special"
+CMENU_OPEN_PROCESS_FOLDER = "  Open process folder"
 
 
 class ActionEvents:
