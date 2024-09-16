@@ -7,11 +7,13 @@ from pystray._win32 import Icon
 
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.resources import APP_ICON
+from constants.threads import THREAD_SETTINGS
 from constants.ui import OPEN_LOG_LABEL, OPEN_CONFIG_LABEL
 from constants.updates import UPDATE_URL
 from ui.settings import open_settings
 from util.files import open_log_file, open_config_file
 from util.messages import yesno_error_box, show_error, show_info
+from util.scheduler import TaskScheduler
 from util.startup import toggle_startup, is_in_startup
 from util.updates import check_latest_version
 from util.utils import is_portable
@@ -46,6 +48,14 @@ def check_updates():
             webbrowser.open(UPDATE_URL, new=0, autoraise=True)
 
 
+def close_app(item):
+    if TaskScheduler.check_task(THREAD_SETTINGS):
+        show_info(APP_NAME_WITH_VERSION, "Please close the settings window before closing the application.")
+        return
+
+    return item.stop()
+
+
 def init_tray() -> Icon:
     """
     Initializes and returns a system tray icon.
@@ -75,7 +85,7 @@ def init_tray() -> Icon:
         ),
         Menu.SEPARATOR,
 
-        MenuItem('Quit', lambda item: item.stop()),
+        MenuItem('Quit', close_app),
     )
 
     return pystray.Icon("tray_icon", image, APP_NAME, menu)

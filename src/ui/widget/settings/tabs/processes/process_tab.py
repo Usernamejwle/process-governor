@@ -4,8 +4,8 @@ from typing import Optional
 
 from constants.log import LOG
 from constants.resources import UI_PROCESS_LIST
-from constants.threads import THREAD_PROCESS_LIST
-from constants.ui import UI_PADDING, ActionEvents
+from constants.threads import THREAD_PROCESS_LIST_DATA
+from constants.ui import UI_PADDING, ActionEvents, ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE
 from enums.rules import RuleType
 from enums.selector import SelectorType
 from model.process import Process
@@ -43,9 +43,6 @@ class ProcessesTab(BaseTab):
 
         super().__init__(master)
 
-        self._is_close = False
-        self.bind("<Destroy>", self._on_close)
-
         self._create_process_list()
         self._create_progress_bar()
         self._create_actions()
@@ -74,64 +71,64 @@ class ProcessesTab(BaseTab):
         self._refresh()
 
     def _update_process_list(self):
-        filter_by_type = self.actions.filterByType.get_enum_value()
-        search_query = self.actions.search.get().strip().lower()
+        try:
+            filter_by_type = self.actions.filterByType.get_enum_value()
+            search_query = self.actions.search.get().strip().lower()
 
-        self.process_list.set_filter(filter_by_type, search_query)
-        self.process_list.update_ui()
-
-    def _on_close(self, _=None):
-        self._is_close = True
+            self.process_list.set_filter(filter_by_type, search_query)
+            self.process_list.update_ui()
+        except BaseException as e:
+            if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                LOG.exception("Update process list error")
 
     def _refresh(self):
-        main_thread_not_in_mainloop_message = 'main thread is not in main loop'
+        LOG.info("Refreshing process list...")
+
+        def update_process_list():
+            LOG.info("Updating process list...")
+
+            try:
+                self._update_process_list()
+            finally:
+                self._refresh_state()
+
+        def load_data():
+            LOG.info("Loading data...")
+
+            try:
+                self.process_list.set_data(ProcessesInfoService.get_processes(False))
+                self.after(0, update_process_list)
+            except BaseException as e:
+                if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                    LOG.exception("Load data error")
+
+                self._refresh_state()
 
         try:
             self._refresh_state(True)
             self.process_list.clear()
 
-            def load():
-                try:
-                    try:
-                        self.process_list.set_data(ProcessesInfoService.get_processes(False))
+            TaskScheduler.schedule_task(THREAD_PROCESS_LIST_DATA, load_data)
+        except BaseException as e:
+            if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                LOG.exception("Refresh error")
 
-                        def do_ui_update():
-                            if self._is_close:
-                                return
-
-                            try:
-                                try:
-                                    self._update_process_list()
-                                finally:
-                                    self._refresh_state()
-                            except BaseException as e:
-                                if str(e) != main_thread_not_in_mainloop_message:
-                                    LOG.exception("Refresh error")
-
-                        if self._is_close:
-                            return
-
-                        self.after(0, do_ui_update)
-                    finally:
-                        self._refresh_state()
-                except BaseException as e:
-                    if str(e) != main_thread_not_in_mainloop_message:
-                        LOG.exception("Refresh error")
-
-            TaskScheduler.schedule_task(THREAD_PROCESS_LIST, load)
-        except:
             self._refresh_state()
-            LOG.exception("Refresh error")
 
     def _refresh_state(self, lock: bool = False):
-        actions = self.actions
-        actions.refresh['state'] = DISABLED if lock else NORMAL
+        try:
+            actions = self.actions
+            actions.refresh['state'] = DISABLED if lock else NORMAL
 
-        progress_bar = self._progress_bar
-        if lock:
-            progress_bar.place(relx=0.5, rely=0.5, anchor=CENTER)
-        else:
-            progress_bar.place_forget()
+            progress_bar = self._progress_bar
+
+            if lock:
+                progress_bar.place(relx=0.5, rely=0.5, anchor=CENTER)
+            else:
+                progress_bar.place_forget()
+        except BaseException as e:
+            if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                LOG.exception("Refresh state error")
 
     def save_to_config(self, config: dict):
         pass

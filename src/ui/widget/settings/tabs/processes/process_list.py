@@ -5,16 +5,19 @@ from typing import Callable, Optional
 from PIL import ImageTk
 from pydantic import BaseModel
 
+from constants.log import LOG
 from constants.resources import UI_ADD_PROCESS_RULE, UI_ADD_SERVICE_RULE, UI_COPY, UI_SERVICE, \
     UI_PROCESS
+from constants.threads import THREAD_PROCESS_LIST_ICONS
 from constants.ui import CMENU_ADD_PROCESS_RULE_LABEL, CMENU_ADD_SERVICE_RULE_LABEL, COLUMN_WIDTH_WITH_ICON, \
-    CMENU_COPY_LABEL
+    CMENU_COPY_LABEL, ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE
 from enums.filters import FilterByProcessType
 from enums.rules import RuleType
 from enums.selector import SelectorType
 from model.process import Process
 from ui.widget.common.treeview.pydantic import PydanticTreeviewLoader
 from ui.widget.common.treeview.sortable import SortableTreeview
+from util.scheduler import TaskScheduler
 from util.ui import load_img, trim_cmenu_label
 from util.utils import get_icon_from_exe
 
@@ -157,10 +160,23 @@ class ProcessList(SortableTreeview):
         self._update_process_icons()
 
     def _update_process_icons(self):
-        for row_id in self.get_children():
-            model = self.as_model(row_id)
-            icon = self.get_process_icon(model)
-            self.item(row_id, image=icon)
+        def set_icons(icons):
+            try:
+                for row_id, icon in icons:
+                    self.item(row_id, image=icon)
+            except BaseException as e:
+                if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                    LOG.exception("Update process icons error")
+
+        def get_icons():
+            try:
+                icons = {row_id: self.get_process_icon(self.as_model(row_id)) for row_id in self.get_children()}
+                self.after(0, lambda: set_icons(icons.items()))
+            except BaseException as e:
+                if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):
+                    LOG.exception("Get process icons error")
+
+        TaskScheduler.schedule_task(THREAD_PROCESS_LIST_ICONS, get_icons)
 
     def _get_filtered_data(self, filter_by_type, search_query):
         data = []

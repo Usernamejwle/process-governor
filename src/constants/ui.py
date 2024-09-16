@@ -49,3 +49,6 @@ class EditableTreeviewEvents:
 
 class ScrollableTreeviewEvents:
     SCROLL: Final[str] = "<<Scroll>>"
+
+
+ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE = 'main thread is not in main loop'
