@@ -26,7 +26,6 @@ class BaseRulesTab(BaseTab, ABC):
         self.rules_list = self._create_rules_list()
         self.actions = self._create_actions()
 
-        self._update_actions_state()
         self._pack()
 
     def _pack(self):

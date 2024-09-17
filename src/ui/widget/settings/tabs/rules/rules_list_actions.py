@@ -1,4 +1,4 @@
-from tkinter import ttk
+from tkinter import ttk, DISABLED
 
 from constants.resources import UI_ADD, UI_DELETE, UI_UP, UI_DOWN
 from constants.ui import ActionEvents, LEFT_PACK
@@ -23,6 +23,7 @@ class RulesListActions(ttk.Frame):
         self.delete = delete = ExtendedButton(
             self,
             text="Del",
+            state=DISABLED,
             event=ActionEvents.DELETE,
             image=load_img(file=UI_DELETE),
             description="**Deletes** the selected rules. \n**Hotkey:** __Del__."
@@ -31,6 +32,7 @@ class RulesListActions(ttk.Frame):
         self.move_up = move_up = ExtendedButton(
             self,
             text="Up",
+            state=DISABLED,
             event=ActionEvents.UP,
             image=load_img(file=UI_UP),
             description="**Moves** the current rule __up__."
@@ -39,6 +41,7 @@ class RulesListActions(ttk.Frame):
         self.move_down = move_down = ExtendedButton(
             self,
             text="Down",
+            state=DISABLED,
             event=ActionEvents.DOWN,
             image=load_img(file=UI_DOWN),
             description="**Moves** the current rule __down__."

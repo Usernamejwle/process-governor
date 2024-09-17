@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
+from pydantic.config import JsonDict
+
 
 class BaseMigration(ABC):
     @staticmethod
     @abstractmethod
-    def should_migrate(config: dict) -> bool:
+    def should_migrate(config: JsonDict) -> bool:
         """
         Checks if migration is necessary.
 
@@ -15,7 +17,7 @@ class BaseMigration(ABC):
 
     @staticmethod
     @abstractmethod
-    def migrate(config: dict) -> dict:
+    def migrate(config: JsonDict) -> JsonDict:
         """
         Performs the migration and returns the updated configuration.
 

@@ -1,5 +1,7 @@
 from typing import Optional
 
+from pydantic.config import JsonDict
+
 from configuration.migration.base import BaseMigration
 
 
@@ -9,11 +11,11 @@ class MigrationRules2SplitRulesConfig(BaseMigration):
         return 1
 
     @staticmethod
-    def should_migrate(config: dict) -> bool:
+    def should_migrate(config: JsonDict) -> bool:
         return 'version' not in config or config['version'] is None
 
     @staticmethod
-    def migrate(config: dict) -> Optional[dict]:
+    def migrate(config: JsonDict) -> Optional[JsonDict]:
         if 'rules' not in config:
             return config
 

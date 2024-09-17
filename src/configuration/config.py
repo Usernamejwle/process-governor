@@ -9,7 +9,7 @@ class Config(BaseModel):
     """
     The Config class represents a configuration object for application.
 
-    It defines the structure of the configuration, including rule application interval, logging settings, and rules.
+    It defines the structure of the configuration, including rule application interval, and rules.
     """
 
     version: Optional[int] = Field(default=None)

@@ -40,6 +40,8 @@ class SettingsTabs(ttk.Notebook):
         process_rules_tab.place()
         service_rules_tab.place()
 
+        self._update_tabs_state()
+
     def current_tab(self) -> BaseTab:
         current_index = self.index(self.select())
         tab_id = self.tabs()[current_index]
@@ -106,7 +108,7 @@ class SettingsTabs(ttk.Notebook):
         tabs = self.frames_by_tab()
 
         for id, tab in tabs.items():
-            star = "*" if tab.has_changes() or tab.has_error() else ""
+            star = "*" if tab.has_changes() or tab.has_error() else " "
             self.tab(id, text=f" {tab.title()} {star}")
 
     def next_tab(self):

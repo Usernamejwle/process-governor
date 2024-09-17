@@ -1,16 +1,16 @@
 import os
-from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, NORMAL, DISABLED
+from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, DISABLED, NORMAL
 from typing import Optional
 
 from configuration.migration.all_migration import run_all_migration
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME, TITLE_ERROR
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
-from constants.resources import APP_ICON, UI_SAVE, UI_LOG, UI_CONFIG
+from constants.resources import APP_ICON
 from constants.threads import THREAD_SETTINGS
 from constants.ui import UI_PADDING, RC_WIN_SIZE, ActionEvents, SETTINGS_TITLE, EditableTreeviewEvents, \
-    RIGHT_PACK, LEFT_PACK, OPEN_CONFIG_LABEL, OPEN_LOG_LABEL, ExtendedTreeviewEvents
-from ui.widget.common.button import ExtendedButton
+    ExtendedTreeviewEvents
+from ui.settings_actions import SettingsActions
 from ui.widget.common.entry import ExtendedEntry
 from ui.widget.settings.settings_tabs import SettingsTabs
 from ui.widget.settings.tabs.base_tab import BaseTab
@@ -22,7 +22,6 @@ from util.files import open_config_file, open_log_file
 from util.history import HistoryManager
 from util.messages import yesno_error_box
 from util.scheduler import TaskScheduler
-from util.ui import load_img
 
 
 class Settings(Tk):
@@ -35,8 +34,14 @@ class Settings(Tk):
 
         self._create_widgets()
         self._pack()
-        self._setup_tooltips()
         self._setup_window()
+
+        self.after(1, self._after_init)
+
+    def _after_init(self):
+        self._setup_tooltips()
+        self._setup_binds()
+        self._tabs.load_data()
 
     def _setup_window(self):
         self._center_window()
@@ -46,9 +51,15 @@ class Settings(Tk):
         self.title(APP_NAME_WITH_VERSION)
         self.minsize(*RC_WIN_SIZE)
 
+    def _setup_binds(self):
+        self._tabs.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_actions_state(), "+")
+
+        self._actions.bind(ActionEvents.SAVE, lambda _: self._save(), "+")
+        self._actions.bind(ActionEvents.CONFIG, lambda _: open_config_file(), "+")
+        self._actions.bind(ActionEvents.LOG, lambda _: open_log_file(), "+")
+
         self.bind("<Control-Tab>", lambda _: self._tabs.next_tab(), "+")
         self.bind("<Shift-Control-Tab>", lambda _: self._tabs.prev_tab(), "+")
-
         self.bind("<Key>", self._fix_cyrillic_binds, "+")
         self.bind("<KeyPress>", self._global_actions, "+")
 
@@ -118,26 +129,9 @@ class Settings(Tk):
         self.geometry(f"{RC_WIN_SIZE[0]}x{RC_WIN_SIZE[1]}+{x}+{y}")
 
     def _create_widgets(self):
-        self._create_tabs()
-        self._create_tooltips()
-        self._create_actions()
-
-    def _create_tooltips(self):
+        self._tabs = SettingsTabs(self)
         self._tooltip = Tooltip(self, text=self._tabs.get_default_tooltip())
-
-    def _create_tabs(self):
-        self._tabs = tabs = SettingsTabs(self)
-        tabs.load_data()
-        tabs.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_actions_state(), "+")
-
-    def _create_actions(self):
-        self._actions = actions = SettingsActions(self)
-
-        actions.bind(ActionEvents.SAVE, lambda _: self._save(), "+")
-        actions.bind(ActionEvents.CONFIG, lambda _: open_config_file(), "+")
-        actions.bind(ActionEvents.LOG, lambda _: open_log_file(), "+")
-
-        self._update_actions_state()
+        self._actions = SettingsActions(self)
 
     def _save(self):
         result = self._tabs.save_data()
@@ -343,41 +337,6 @@ class Settings(Tk):
         self.lift()
         self.attributes('-topmost', True)
         self.after_idle(self.attributes, '-topmost', False)
-
-
-class SettingsActions(ttk.Frame):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._setup_btn()
-
-    def _setup_btn(self):
-        self.open_config = open_config = ExtendedButton(
-            self,
-            text=f"{OPEN_CONFIG_LABEL}",
-            event=ActionEvents.CONFIG,
-            image=load_img(file=UI_CONFIG),
-            description="**Opens** the __config file__."
-        )
-
-        self.open_log = open_log = ExtendedButton(
-            self,
-            text=f"{OPEN_LOG_LABEL}",
-            event=ActionEvents.LOG,
-            image=load_img(file=UI_LOG),
-            description="**Opens** the __log file__."
-        )
-
-        self.save = save = ExtendedButton(
-            self,
-            text="Save",
-            event=ActionEvents.SAVE,
-            image=load_img(file=UI_SAVE),
-            description="**Saves** the __settings__. \n**Hotkey:** __Ctrl+S__."
-        )
-
-        open_config.pack(**LEFT_PACK)
-        open_log.pack(**LEFT_PACK)
-        save.pack(**RIGHT_PACK)
 
 
 __app: Optional[Settings] = None
