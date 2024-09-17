@@ -82,6 +82,8 @@ class Process(BaseModel):
         exclude=True
     )
 
+    is_new: bool = Field(exclude=True)
+
     def __hash__(self):
         return hash((self.pid, self.bin_path, self.process_name, self.cmd_line))
 

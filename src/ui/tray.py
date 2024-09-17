@@ -1,5 +1,3 @@
-import webbrowser
-
 import pystray
 from PIL import Image
 from pystray import MenuItem, Menu
@@ -7,53 +5,25 @@ from pystray._win32 import Icon
 
 from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
 from constants.resources import APP_ICON
-from constants.threads import THREAD_SETTINGS
 from constants.ui import OPEN_LOG_LABEL, OPEN_CONFIG_LABEL
-from constants.updates import UPDATE_URL
-from ui.settings import open_settings
+from ui.settings import open_settings, is_opened_settings, get_settings
 from util.files import open_log_file, open_config_file
-from util.messages import yesno_error_box, show_error, show_info
-from util.scheduler import TaskScheduler
 from util.startup import toggle_startup, is_in_startup
-from util.updates import check_latest_version
+from util.updates import check_updates
 from util.utils import is_portable
 
 
-def check_updates():
-    """
-    Check for updates and display appropriate messages depending on the result.
-
-    Returns:
-        None
-    """
-
-    latest_version = check_latest_version()
-
-    if latest_version is None:
-        show_error(
-            f"Error Detected - {APP_NAME_WITH_VERSION}",
-            "Failed to check for updates. Please check your internet connection."
-        )
-    elif not latest_version:
-        show_info(
-            APP_NAME_WITH_VERSION,
-            "You are using the latest version."
-        )
-    else:
-        message = (
-            f"A new version {latest_version} is available. Would you like to update {APP_NAME} now?"
-        )
-
-        if yesno_error_box(APP_NAME_WITH_VERSION, message):
-            webbrowser.open(UPDATE_URL, new=0, autoraise=True)
-
-
 def close_app(item):
-    if TaskScheduler.check_task(THREAD_SETTINGS):
-        show_info(APP_NAME_WITH_VERSION, "Please close the settings window before closing the application.")
-        return
+    if not is_opened_settings():
+        return item.stop()
 
-    return item.stop()
+    settings = get_settings()
+
+    def close():
+        if settings.close():
+            item.stop()
+
+    settings.after_idle(close)
 
 
 def init_tray() -> Icon:

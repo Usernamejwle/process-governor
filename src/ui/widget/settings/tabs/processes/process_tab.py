@@ -96,7 +96,7 @@ class ProcessesTab(BaseTab):
             LOG.info("Loading data...")
 
             try:
-                self.process_list.set_data(ProcessesInfoService.get_processes(False))
+                self.process_list.set_data(ProcessesInfoService.get_processes())
                 self.after(0, update_process_list)
             except BaseException as e:
                 if ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE not in str(e):

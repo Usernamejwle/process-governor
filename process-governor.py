@@ -3,7 +3,7 @@ import sys
 
 import pyuac
 
-from constants.app_info import APP_NAME, APP_NAME_WITH_VERSION
+from constants.app_info import APP_NAME
 from constants.log import LOG
 from main_loop import start_app
 from util.lock_instance import create_lock_file, remove_lock_file
@@ -19,7 +19,7 @@ if __name__ == "__main__":
                    "Please run the program as an administrator to ensure proper functionality.")
 
         LOG.error(message)
-        show_error(f"Error Detected - {APP_NAME_WITH_VERSION}", message)
+        show_error(message)
         sys.exit(1)
 
     create_lock_file()

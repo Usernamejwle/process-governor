@@ -29,7 +29,6 @@ class RulesService(ABC):
 
     __ignore_pids: set[int] = {0, os.getpid()}
     __ignored_process_parameters: dict[Process, set[ProcessParameter]] = {}
-    __force_pids: set[int] = set()
 
     @classmethod
     def apply_rules(cls, config: Config, only_new: bool):
@@ -47,15 +46,14 @@ class RulesService(ABC):
             return
 
         cls.__light_gc_ignored_process_parameters()
-        cls.__force_pids = cls.__handle_processes(
+        cls.__handle_processes(
             config,
-            ProcessesInfoService.get_processes(only_new, cls.__force_pids)
+            ProcessesInfoService.get_processes(),
+            only_new
         )
 
     @classmethod
-    def __handle_processes(cls, config: Config, processes: dict[int, Process]) -> set[int]:
-        force_pids: set[int] = set()
-
+    def __handle_processes(cls, config: Config, processes: dict[int, Process], only_new: bool):
         for pid, process in processes.items():
             if pid in cls.__ignore_pids:
                 continue
@@ -65,15 +63,13 @@ class RulesService(ABC):
             if not rule:
                 continue
 
-            if rule.force == BoolStr.YES:
-                force_pids.add(pid)
+            if rule.force == BoolStr.NO and only_new and not process.is_new:
+                continue
 
             if rule.delay > 0:
                 TaskScheduler.schedule_task(process, cls.__handle_process, rule.delay, process, rule)
             else:
                 cls.__handle_process(process, rule)
-
-        return force_pids
 
     @classmethod
     def __handle_process(cls, process: Process, rule: ProcessRule | ServiceRule):

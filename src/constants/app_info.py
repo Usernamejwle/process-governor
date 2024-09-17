@@ -11,6 +11,7 @@ APP_PROCESSES = {f"{APP_NAME}.exe", "python.exe"}
 
 CURRENT_TAG: Final[str] = f"v{APP_VERSION}"
 APP_NAME_WITH_VERSION: Final[str] = f"{APP_NAME} {CURRENT_TAG}"
+TITLE_ERROR: Final[str] = f"Error Detected - {APP_NAME_WITH_VERSION}"
 
 if is_portable():
     APP_PATH: Final[str] = sys._MEIPASS

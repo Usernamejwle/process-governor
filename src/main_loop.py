@@ -8,7 +8,7 @@ from pystray._win32 import Icon
 
 from configuration.config import Config
 from configuration.migration.all_migration import run_all_migration
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.app_info import APP_NAME
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
 from constants.threads import THREAD_SETTINGS, THREAD_TRAY
@@ -20,6 +20,7 @@ from ui.tray import init_tray
 from util.messages import yesno_error_box, show_error
 from util.scheduler import TaskScheduler
 from util.startup import update_startup
+from util.updates import check_updates
 
 
 def priority_setup():
@@ -96,6 +97,7 @@ def start_app():
         run_all_migration()
         update_startup()
         priority_setup()
+        check_updates(True)
 
         tray: Icon = init_tray()
         main_loop(tray)
@@ -110,20 +112,18 @@ def start_app():
 
 
 def show_rules_error_message():
-    title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     message = "An error has occurred while loading or applying the rules.\n"
 
     if TaskScheduler.check_task(THREAD_SETTINGS):
         message += "Please check the correctness of the rules."
-        show_error(title, message)
+        show_error(message)
     else:
         message += f"Would you like to open the {SETTINGS_TITLE} to review and correct the rules?"
-        if yesno_error_box(title, message):
+        if yesno_error_box(message):
             open_settings()
 
 
 def show_abstract_error_message(will_closed: bool):
-    title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     will_closed_text = 'The application will now close.' if will_closed else ''
     message = (
         f"An error has occurred in the {APP_NAME} application. {will_closed_text}\n"
@@ -131,5 +131,5 @@ def show_abstract_error_message(will_closed: bool):
         f"Would you like to open the log file?"
     )
 
-    if yesno_error_box(title, message):
+    if yesno_error_box(message):
         os.startfile(LOG_FILE_NAME)

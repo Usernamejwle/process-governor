@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, NORMAL, DISABLED
 from typing import Optional
 
 from configuration.migration.all_migration import run_all_migration
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME, TITLE_ERROR
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
 from constants.resources import APP_ICON, UI_SAVE, UI_LOG, UI_CONFIG
@@ -41,7 +41,7 @@ class Settings(Tk):
     def _setup_window(self):
         self._center_window()
 
-        self.protocol("WM_DELETE_WINDOW", self._on_window_closing)
+        self.protocol("WM_DELETE_WINDOW", self.close)
         self.iconbitmap(APP_ICON)
         self.title(APP_NAME_WITH_VERSION)
         self.minsize(*RC_WIN_SIZE)
@@ -145,38 +145,45 @@ class Settings(Tk):
         self._update_actions_state()
         return result
 
-    def _on_window_closing(self):
+    def close(self):
         has_error = self._tabs.has_error()
 
         if self._tabs.has_unsaved_changes():
             if has_error:
+                self.to_front()
+
                 message = ("There are errors in the rules, and they can't be saved. "
                            "Do you want to DISCARD them and exit?")
-                result = messagebox.askyesno(f"{APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesno(TITLE_ERROR, message)
 
                 if not result:
-                    return
+                    return False
             else:
+                self.to_front()
+
                 message = ("There are unsaved changes. "
                            "Do you want to save them before exiting?")
-                result = messagebox.askyesnocancel(f"{APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesnocancel(APP_NAME_WITH_VERSION, message)
 
                 if result is None:
-                    return
+                    return False
 
                 if result and not self._save():
-                    return
+                    return False
         else:
             if has_error:
+                self.to_front()
+
                 message = (
                     f"There are errors in the rules, and they must be corrected before the application can work properly. "
                     f"Do you still want to close the {SETTINGS_TITLE}?")
-                result = messagebox.askyesno(f"{APP_NAME_WITH_VERSION}", message)
+                result = messagebox.askyesno(APP_NAME_WITH_VERSION, message)
 
                 if not result:
-                    return
+                    return False
 
         self.destroy()
+        return True
 
     def _update_actions_state(self, _=None):
         tabs = self._tabs
@@ -331,6 +338,12 @@ class Settings(Tk):
 
         tab.actions.search.focus_set()
 
+    def to_front(self):
+        self.deiconify()
+        self.lift()
+        self.attributes('-topmost', True)
+        self.after_idle(self.attributes, '-topmost', False)
+
 
 class SettingsActions(ttk.Frame):
     def __init__(self, *args, **kwargs):
@@ -367,11 +380,25 @@ class SettingsActions(ttk.Frame):
         save.pack(**RIGHT_PACK)
 
 
+__app: Optional[Settings] = None
+
+
 def open_settings():
+    global __app
+
+    if __app is not None:
+        __app.after_idle(__app.to_front)
+        return
+
     def settings():
         try:
-            app = Settings()
-            app.mainloop()
+            global __app
+
+            try:
+                __app = Settings()
+                __app.mainloop()
+            finally:
+                __app = None
         except:
             LOG.exception(f"An unexpected error occurred in the {SETTINGS_TITLE} of {APP_NAME}.")
             show_settings_error_message()
@@ -379,15 +406,24 @@ def open_settings():
     TaskScheduler.schedule_task(THREAD_SETTINGS, settings)
 
 
+def is_opened_settings() -> bool:
+    global __app
+    return __app is not None
+
+
+def get_settings() -> Settings:
+    global __app
+    return __app
+
+
 def show_settings_error_message():
-    title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     message = (
         f"An error has occurred in the {SETTINGS_TITLE} of {APP_NAME}.\n"
         f"To troubleshoot, please check the log file `{LOG_FILE_NAME}` for details.\n\n"
         f"Would you like to open the log file?"
     )
 
-    if yesno_error_box(title, message):
+    if yesno_error_box(message):
         os.startfile(LOG_FILE_NAME)
 
 

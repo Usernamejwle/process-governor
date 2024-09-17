@@ -1,7 +1,9 @@
 from tkinter import ttk, messagebox
 from typing import Optional
 
-from constants.app_info import APP_NAME_WITH_VERSION
+from pydantic.config import JsonDict
+
+from constants.app_info import TITLE_ERROR
 from constants.log import LOG
 from constants.ui import ExtendedTreeviewEvents
 from service.config_service import ConfigService
@@ -20,7 +22,7 @@ class SettingsTabs(ttk.Notebook):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._config: Optional[dict] = None
+        self._config: Optional[JsonDict] = None
         self._create_tabs()
 
         self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_tabs_state(), "+")
@@ -68,7 +70,7 @@ class SettingsTabs(ttk.Notebook):
 
             if self.has_error():
                 messagebox.showerror(
-                    f"Error Detected - {APP_NAME_WITH_VERSION}",
+                    TITLE_ERROR,
                     "Unable to save: The current rules are invalid. "
                     "Ensure all rules are correct before saving."
                 )
@@ -84,8 +86,8 @@ class SettingsTabs(ttk.Notebook):
 
             return True
         except:
-            LOG.exception("Error when saving file.")
-            messagebox.showerror(f"Error Detected - {APP_NAME_WITH_VERSION}", "An error occurred while saving.")
+            LOG.exception("An error occurred while saving.")
+            messagebox.showerror(TITLE_ERROR, "An error occurred while saving.")
             return False
 
     def frames(self) -> list[BaseTab]:

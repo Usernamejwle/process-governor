@@ -15,41 +15,46 @@ class ProcessesInfoService(ABC):
     It is an abstract base class (ABC) to be subclassed by specific implementation classes.
     """
 
-    __prev_pids: set[int] = []
+    _cache: dict[int, Process] = {}
 
     @classmethod
-    def get_processes(
-            cls,
-            only_new: bool,
-            force_return_pids: set[int] = None
-    ) -> dict[int, Process]:
+    def get_processes(cls) -> dict[int, Process]:
         """
-        Retrieves a dictionary of running processes and their information.
+        Returns a dictionary with information about running processes.
 
-        Args:
-            only_new (bool): If True, returns only processes that have started since the last call.
-                             If False, returns all currently running processes.
-            force_return_pids (set[int], optional): A set of process IDs that should be included in the result
-                                                    even if they are not new. Defaults to an empty set if not provided.
         Returns:
-            dict[int, Process]: A dictionary where keys are process IDs and values are Process objects,
-                                containing detailed information about each running process.
+            dict[int, Process]: A dictionary with information about running processes.
         """
+
+        cache = cls._cache
         services = ServicesInfoService.get_services()
-        result: dict[int, Process] = {}
-        current_pids: list[int] = psutil.pids()
-        force_return_pids = force_return_pids or set()
+        pids = set(psutil.pids())
 
-        for pid in current_pids:
-            if only_new and pid in cls.__prev_pids and pid not in force_return_pids:
-                continue
-
+        for pid in pids:
             try:
-                process = psutil.Process(pid)
-                service = services.get(pid)
+                process_info = psutil.Process(pid)
+                info = process_info.as_dict(attrs=[
+                    'exe',
+                    'nice', 'ionice', 'cpu_affinity'
+                ])
 
-                info = process.as_dict(attrs=['name', 'exe', 'nice', 'ionice', 'cpu_affinity', 'cmdline'])
-                result[pid] = Process.model_construct(
+                if pid in cache:
+                    process = cache[pid]
+
+                    if process.bin_path == info['exe']:
+                        process.priority = none_int(info['nice'])
+                        process.io_priority = none_int(info['ionice'])
+                        process.affinity = info['cpu_affinity']
+                        process.is_new = False
+                        continue
+
+                service = services.get(pid)
+                info = process_info.as_dict(attrs=[
+                    'name', 'exe', 'cmdline',
+                    'nice', 'ionice', 'cpu_affinity'
+                ])
+
+                cache[pid] = Process.model_construct(
                     pid=pid,
                     process_name=info['name'],
                     service_name=getattr(service, 'name', None),
@@ -58,16 +63,19 @@ class ProcessesInfoService(ABC):
                     priority=none_int(info['nice']),
                     io_priority=none_int(info['ionice']),
                     affinity=info['cpu_affinity'],
-                    process=process,
-                    service=service
+                    process=process_info,
+                    service=service,
+                    is_new=True
                 )
             except NoSuchProcess:
                 pass
 
-        if only_new:
-            cls.__prev_pids = set(current_pids)
+        deleted_pids = cache.keys() - pids
 
-        return result
+        for pid in deleted_pids:
+            del cache[pid]
+
+        return cache.copy()
 
     @staticmethod
     def _get_command_line(pid, info):

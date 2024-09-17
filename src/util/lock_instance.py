@@ -3,7 +3,7 @@ import sys
 
 import psutil
 
-from constants.app_info import APP_PROCESSES, APP_NAME_WITH_VERSION
+from constants.app_info import APP_PROCESSES
 from constants.files import LOCK_FILE_NAME
 from constants.log import LOG
 from util.messages import show_error
@@ -48,7 +48,7 @@ def create_lock_file():
                                "Please close the existing instance before starting a new one.")
 
                     LOG.error(message)
-                    show_error(f"Error Detected - {APP_NAME_WITH_VERSION}", message)
+                    show_error(message)
                     sys.exit(1)
 
     # Create the lock file with the current process's PID
