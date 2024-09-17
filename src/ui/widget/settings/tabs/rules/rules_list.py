@@ -82,7 +82,16 @@ class RulesList(EditableTreeview):
             accelerator="Del"
         )
 
-        self.bind("<Button-3>", lambda event: menu.post(event.x_root, event.y_root), '+')
+        self.bind("<Button-3>", self._show_context_menu, '+')
+
+    def _show_context_menu(self, event):
+        context_menu = self._context_menu
+        process_list = self
+        row_id = process_list.identify_row(event.y)
+
+        if row_id:
+            process_list.selection_set(row_id)
+            context_menu.post(event.x_root, event.y_root)
 
     def _errors(self) -> dict[Any, Any]:
         errors = [
