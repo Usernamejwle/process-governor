@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -7,8 +6,7 @@ class Service:
     """
     The Service class represents information about a Windows service.
 
-    It includes attributes such as service process ID (pid), service name, display name, description, current status,
-    and binary path.
+    It includes attributes such as service process ID (pid), name and current status.
     """
 
     pid: int
@@ -21,22 +19,7 @@ class Service:
     The name of the Windows service.
     """
 
-    display_name: str
-    """
-    The display name of the Windows service.
-    """
-
-    description: Optional[str]
-    """
-    A description of the Windows service. Default is None (no description available).
-    """
-
     status: str
     """
     The current status of the Windows service.
-    """
-
-    bin_path: str
-    """
-    The binary path of the Windows service, specifying the location of the service executable.
     """

@@ -41,6 +41,7 @@ class Settings(Tk):
     def _after_init(self):
         self._setup_tooltips()
         self._setup_binds()
+
         self._tabs.load_data()
 
     def _setup_window(self):
@@ -355,6 +356,7 @@ def open_settings():
 
             try:
                 __app = Settings()
+                __app.after_idle(__app.to_front)
                 __app.mainloop()
             finally:
                 __app = None

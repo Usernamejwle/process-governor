@@ -161,7 +161,8 @@ def get_values_from_enum(annotation):
     return values
 
 
-def get_icon_from_exe(exe_path, icon_index=0, large=False, try_load_another_if_absent=True):
+@cache
+def get_icon_from_exe(exe_path, icon_index=0, large=False):
     if large:
         icon_size = (
             win32api.GetSystemMetrics(win32con.SM_CXICON),

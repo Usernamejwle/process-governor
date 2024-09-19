@@ -88,9 +88,11 @@ class RulesList(EditableTreeview):
         context_menu = self._context_menu
         process_list = self
         row_id = process_list.identify_row(event.y)
+        selected_items = process_list.selection()
 
         if row_id:
-            process_list.selection_set(row_id)
+            if selected_items and len(selected_items) == 1:
+                process_list.selection_set(row_id)
             context_menu.post(event.x_root, event.y_root)
 
     def _errors(self) -> dict[Any, Any]:

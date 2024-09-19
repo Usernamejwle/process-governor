@@ -24,7 +24,6 @@ from util.utils import path_match
 class RulesService(ABC):
     """
     The RulesService class provides methods for applying rules to processes and services.
-    It is an abstract base class (ABC) to be subclassed by specific implementation classes.
     """
 
     __ignore_pids: set[int] = {0, os.getpid()}

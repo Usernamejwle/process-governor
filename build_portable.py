@@ -7,6 +7,7 @@ import pyinstaller_versionfile
 
 from constants.app_info import APP_NAME, APP_VERSION, APP_AUTHOR, APP_NAME_WITH_VERSION
 from constants.files import CONFIG_FILE_NAME
+from util.files import explore
 
 # Setting paths and configuration parameters
 VERSION_FILE = "versionfile.txt"
@@ -52,8 +53,10 @@ PyInstaller.__main__.run([
 ])
 
 # Creating an archive of the built application
-shutil.make_archive(APP_DIST_WITH_VERSION, 'zip', APP_DIST)
+archive_file_path = shutil.make_archive(APP_DIST_WITH_VERSION, 'zip', APP_DIST)
 
 # Copying the configuration file for tests into the built application
 if os.path.isfile(CONFIG_FILE_FOR_TESTS):
     shutil.copyfile(CONFIG_FILE_FOR_TESTS, CONFIG_FILE_IN_APP_DIST)
+
+explore(archive_file_path)

@@ -1,5 +1,6 @@
 import subprocess
 from abc import ABC
+from typing import Optional
 
 import psutil
 from psutil import NoSuchProcess
@@ -12,7 +13,6 @@ from util.utils import none_int
 class ProcessesInfoService(ABC):
     """
     The ProcessesInfoService class provides methods for retrieving information about running processes.
-    It is an abstract base class (ABC) to be subclassed by specific implementation classes.
     """
 
     _cache: dict[int, Process] = {}
@@ -27,7 +27,7 @@ class ProcessesInfoService(ABC):
         """
 
         cache = cls._cache
-        services = ServicesInfoService.get_services()
+        services: Optional[dict] = None
         pids = set(psutil.pids())
 
         for pid in pids:
@@ -47,6 +47,9 @@ class ProcessesInfoService(ABC):
                         process.affinity = info['cpu_affinity']
                         process.is_new = False
                         continue
+
+                if services is None:
+                    services = ServicesInfoService.get_running_services()
 
                 service = services.get(pid)
                 info = process_info.as_dict(attrs=[

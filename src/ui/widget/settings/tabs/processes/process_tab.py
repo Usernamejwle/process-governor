@@ -82,10 +82,8 @@ class ProcessesTab(BaseTab):
                 LOG.exception("Update process list error")
 
     def _refresh(self):
-        LOG.info("Refreshing process list...")
-
         def update_process_list():
-            LOG.info("Updating process list...")
+            # LOG.info("Updating process list...")
 
             try:
                 self._update_process_list()
@@ -93,7 +91,7 @@ class ProcessesTab(BaseTab):
                 self._refresh_state()
 
         def load_data():
-            LOG.info("Loading data...")
+            # LOG.info("Loading data...")
 
             try:
                 self.process_list.set_data(ProcessesInfoService.get_processes())
