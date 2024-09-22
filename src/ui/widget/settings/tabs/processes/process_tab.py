@@ -2,6 +2,7 @@ from tkinter import PhotoImage, ttk, X, BOTH, NORMAL, DISABLED, CENTER
 from tkinter.ttk import Notebook
 from typing import Optional
 
+from configuration.rule import ServiceRule, ProcessRule
 from constants.log import LOG
 from constants.resources import UI_PROCESS_LIST
 from constants.threads import THREAD_PROCESS_LIST_DATA
@@ -10,10 +11,10 @@ from enums.rules import RuleType
 from enums.selector import SelectorType
 from model.process import Process
 from service.processes_info_service import ProcessesInfoService
+from service.rules_service import RulesService
 from ui.widget.settings.tabs.base_tab import BaseTab
 from ui.widget.settings.tabs.processes.process_list import ProcessList
 from ui.widget.settings.tabs.processes.process_list_actions import ProcessListActions
-from ui.widget.settings.tabs.rules.rules_list import RulesList
 from util.scheduler import TaskScheduler
 from util.ui import load_img
 
@@ -21,7 +22,7 @@ from util.ui import load_img
 class ProcessesTab(BaseTab):
     @staticmethod
     def default_tooltip() -> str:
-        return "Use the **context menu** to add a __process__ or __service__ as a rule."
+        return "Use the **context menu** to add a __process__ or __service__ as a rule, as well as for other actions."
 
     @staticmethod
     def icon() -> PhotoImage:
@@ -36,10 +37,9 @@ class ProcessesTab(BaseTab):
         return ("Interface for **browsing** the list of active __processes__ and __services__ with the option to "
                 "**add** selected items to the rules configuration.")
 
-    def __init__(self, master: Notebook, process_rules_list: RulesList, service_rules_list: RulesList):
+    def __init__(self, master: Notebook):
         self.model = Process
-        self.process_rules_list = process_rules_list
-        self.service_rules_list = service_rules_list
+        self.master = master
 
         super().__init__(master)
 
@@ -50,7 +50,13 @@ class ProcessesTab(BaseTab):
         self._pack()
 
     def _create_process_list(self):
-        self.process_list = process_list = ProcessList(self.model, self._add_rule, self)
+        self.process_list = process_list = ProcessList(
+            self.model,
+            self._add_rule,
+            self._find_rules_by_process,
+            self._go_to_rule,
+            self
+        )
         process_list.bind("<F5>", lambda _: self._refresh(), "+")
 
     def _create_progress_bar(self):
@@ -150,9 +156,9 @@ class ProcessesTab(BaseTab):
         rules_list = None
 
         if rule_type == RuleType.PROCESS:
-            rules_list = self.process_rules_list
+            rules_list = self.master._process_rules_tab.rules_list
         elif rule_type == RuleType.SERVICE:
-            rules_list = self.service_rules_list
+            rules_list = self.master._service_rules_tab.rules_list
 
         if rules_list is None:
             raise ValueError("rules_list is None")
@@ -172,3 +178,27 @@ class ProcessesTab(BaseTab):
                 rule_row['selector'] = row['cmd_line']
 
         rules_list.add_row([*rule_row.values()], index=0)
+
+    def _find_rules_by_process(self, process: Process) -> list[tuple[str, ProcessRule | ServiceRule]]:
+        master = self.master
+
+        return RulesService.find_rules_ids_by_process(
+            process,
+            master._process_rules_tab.rules_list.as_dict_of_models(),
+            master._service_rules_tab.rules_list.as_dict_of_models()
+        )
+
+    def _go_to_rule(self, row_id: str, rule_type: RuleType):
+        master = self.master
+        tab = None
+
+        if rule_type == RuleType.PROCESS:
+            tab = master._process_rules_tab
+        elif rule_type == RuleType.SERVICE:
+            tab = master._service_rules_tab
+
+        if tab is None:
+            raise ValueError("tab is None")
+
+        master.select(tab)
+        tab.rules_list.selection_set(row_id)

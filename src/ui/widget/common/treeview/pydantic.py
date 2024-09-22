@@ -116,3 +116,13 @@ class PydanticTreeviewLoader:
             result[column_name] = str(default_value)
 
         return result
+
+    def as_dict_of_models(self, validate: bool) -> dict[str, BaseModel]:
+        treeview = self._treeview
+        constructor = self._model if validate else self._model.model_construct
+        result = OrderedDict()
+
+        for row_id in treeview.get_children():
+            result[row_id] = constructor(**treeview.as_dict(row_id))
+
+        return result

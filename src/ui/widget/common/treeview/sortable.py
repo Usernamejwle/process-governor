@@ -39,8 +39,14 @@ class SortableTreeview(ScrollableTreeview):
         column = self._sort_column_name
         reverse = self._sort_reverse
 
+        def sorter(value):
+            if isinstance(value, str):
+                return (True, value.strip() == '', value)
+
+            return (False, False, value)
+
         items = [(self._get_value_as_type(self.set(k, column)), k) for k in self.get_children()]
-        items.sort(key=lambda x: (isinstance(x[0], str), x[0]), reverse=reverse)
+        items.sort(key=lambda x: sorter(x[0]), reverse=reverse)
 
         for index, (_, k) in enumerate(items):
             self.move(k, '', index)
@@ -95,7 +101,7 @@ if __name__ == "__main__":
         ('Papaya', 16, 120),
         ('Quince', 15, 110),
         ('Raspberry', 18, 35),
-        ('Strawberry', 19, 95),
+        ('', 19, 95),
         ('Tangerine', 17, 55),
         ('Ugli Fruit', 21, 130),
         ('Vanilla', 22, 300),

@@ -198,3 +198,6 @@ class RulesList(EditableTreeview):
 
     def commit_changes(self):
         self._loader.commit_changes()
+
+    def as_dict_of_models(self) -> dict[str, BaseModel]:
+        return self._loader.as_dict_of_models(False)

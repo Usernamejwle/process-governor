@@ -66,7 +66,7 @@ class RulesService(ABC):
                 continue
 
             if rule.delay > 0:
-                TaskScheduler.schedule_task(process, cls.__handle_process, rule.delay, process, rule)
+                TaskScheduler.schedule_task(process, cls.__handle_process, process, rule, delay=rule.delay)
             else:
                 cls.__handle_process(process, rule)
 
@@ -127,21 +127,47 @@ class RulesService(ABC):
                     return rule
 
         for rule in config.processRules:
-            if rule.selectorBy == SelectorType.NAME:
-                value = process.process_name
-            elif rule.selectorBy == SelectorType.PATH:
-                value = process.bin_path
-            elif rule.selectorBy == SelectorType.CMDLINE:
-                value = process.cmd_line
-            else:
-                message = f"Unknown selector type: {rule.selectorBy}"
-                LOG.error(message)
-                raise ValueError(message)
+            value = cls._get_value_for_matching(process, rule)
 
             if path_match(rule.selector, value):
                 return rule
 
         return None
+
+    @classmethod
+    def find_rules_ids_by_process(
+            cls,
+            process: Process,
+            process_rules: dict[str, ProcessRule],
+            service_rules: dict[str, ServiceRule],
+    ) -> list[tuple[str, ProcessRule | ServiceRule]]:
+        result = []
+
+        if process.service:
+            for row_id, rule in service_rules.items():
+                if path_match(rule.selector, process.service_name):
+                    result.append((row_id, rule))
+
+        for row_id, rule in process_rules.items():
+            value = cls._get_value_for_matching(process, rule)
+
+            if path_match(rule.selector, value):
+                result.append((row_id, rule))
+
+        return result
+
+    @classmethod
+    def _get_value_for_matching(cls, process, rule):
+        if rule.selectorBy == SelectorType.NAME:
+            return process.process_name
+        elif rule.selectorBy == SelectorType.PATH:
+            return process.bin_path
+        elif rule.selectorBy == SelectorType.CMDLINE:
+            return process.cmd_line
+
+        message = f"Unknown selector type: {rule.selectorBy}"
+        LOG.error(message)
+        raise ValueError(message)
 
     @classmethod
     @cached(5)  # Workaround to ensure the procedure runs only once every 5 seconds

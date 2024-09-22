@@ -52,7 +52,7 @@ def path_match(pattern: str, value: str) -> bool:
 
     Args:
         pattern (str): The pattern to match against, supporting wildcards.
-        *values (str): The values to test against the pattern.
+        value (str): The value to test against the pattern.
 
     Returns:
         bool: True if any value matches the pattern, False otherwise.

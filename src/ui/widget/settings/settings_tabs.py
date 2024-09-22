@@ -28,17 +28,13 @@ class SettingsTabs(ttk.Notebook):
         self.bind(ExtendedTreeviewEvents.CHANGE, lambda _: self._update_tabs_state(), "+")
 
     def _create_tabs(self):
-        process_rules_tab = ProcessRulesTab(self)
-        service_rules_tab = ServiceRulesTab(self)
-        process_list_tab = ProcessesTab(
-            self,
-            process_rules_tab.rules_list,
-            service_rules_tab.rules_list
-        )
+        self._process_rules_tab = ProcessRulesTab(self)
+        self._service_rules_tab = ServiceRulesTab(self)
+        self._process_list_tab = ProcessesTab(self)
 
-        process_list_tab.place()
-        process_rules_tab.place()
-        service_rules_tab.place()
+        self._process_list_tab.place()
+        self._process_rules_tab.place()
+        self._service_rules_tab.place()
 
         self._update_tabs_state()
 

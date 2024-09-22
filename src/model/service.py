@@ -6,7 +6,7 @@ class Service:
     """
     The Service class represents information about a Windows service.
 
-    It includes attributes such as service process ID (pid), name and current status.
+    It includes attributes such as service process ID (pid), name, display name and current status.
     """
 
     pid: int
@@ -17,6 +17,11 @@ class Service:
     name: str
     """
     The name of the Windows service.
+    """
+
+    display_name: str
+    """
+    The display name of the Windows service.
     """
 
     status: str

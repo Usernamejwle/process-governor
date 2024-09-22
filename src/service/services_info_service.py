@@ -42,6 +42,7 @@ class ServicesInfoService(ABC):
                 result[pid] = Service(
                     pid,
                     service.name(),
+                    service.display_name(),
                     status
                 )
             except NoSuchProcess:

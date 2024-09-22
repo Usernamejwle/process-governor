@@ -12,7 +12,7 @@ class TaskScheduler:
             del cls._tasks[key]
 
     @classmethod
-    def schedule_task(cls, key, callback, delay=0, *args, **kwargs):
+    def schedule_task(cls, key, callback, *args, delay=0, **kwargs):
         if key not in cls._tasks:
             if delay:
                 cls._tasks[key] = threading.Timer(delay, cls._execute_task, args=(key, callback) + args, kwargs=kwargs)
@@ -31,10 +31,10 @@ if __name__ == '__main__':
         print(f"Function executed with message: {message}")
 
 
-    TaskScheduler.schedule_task("task1", my_function, 5, "Hello after 5 seconds")
-    TaskScheduler.schedule_task("task1", my_function, 2, "Hello after 2 seconds")
-    TaskScheduler.schedule_task("task2", my_function, 3, "Hello after 3 seconds")
-    TaskScheduler.schedule_task("task3", my_function, 0, "Immediate execution")
+    TaskScheduler.schedule_task("task1", my_function, "Hello after 5 seconds", delay=5)
+    TaskScheduler.schedule_task("task1", my_function, "Hello after 2 seconds", delay=2)
+    TaskScheduler.schedule_task("task2", my_function, "Hello after 3 seconds", delay=3)
+    TaskScheduler.schedule_task("task3", my_function, "Immediate execution", delay=0)
 
     import time
 

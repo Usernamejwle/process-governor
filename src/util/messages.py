@@ -1,6 +1,6 @@
 from win32api import MessageBoxEx
 
-from constants.app_info import APP_NAME_WITH_VERSION, TITLE_ERROR
+from constants.app_info import APP_NAME_WITH_VERSION, TITLE_ERROR, APP_TITLE
 from enums.messages import MBIcon, MBButton, MBResult
 
 
@@ -20,15 +20,15 @@ def _message_box(title: str, message: str, icon: MBIcon, btn: MBButton) -> MBRes
     return MessageBoxEx(None, message, title, icon | btn)
 
 
-def show_info(message: str, title: str = APP_NAME_WITH_VERSION):
+def show_info(message: str, title: str = APP_TITLE):
     _message_box(title, message, MBIcon.INFORMATION, MBButton.OK)
 
 
-def yesno_info_box(message: str, title: str = APP_NAME_WITH_VERSION) -> bool:
+def yesno_info_box(message: str, title: str = APP_TITLE) -> bool:
     return _message_box(title, message, MBIcon.INFORMATION, MBButton.YESNO) == MBResult.YES
 
 
-def yesno_question_box(message: str, title: str = APP_NAME_WITH_VERSION) -> bool:
+def yesno_question_box(message: str, title: str = APP_TITLE) -> bool:
     return _message_box(title, message, MBIcon.QUESTION, MBButton.YESNO) == MBResult.YES
 
 

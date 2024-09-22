@@ -3,8 +3,6 @@ from functools import lru_cache
 from tkinter import ttk
 from typing import Optional, Literal, Any
 
-from pydantic.config import JsonDict
-
 from constants.ui import COLUMN_TITLE_PADDING, ExtendedTreeviewEvents
 from util.ui import get_default_font
 from util.utils import get_values_from_enum
@@ -132,8 +130,9 @@ class ExtendedTreeview(ttk.Treeview):
     @lru_cache
     def _calculate_max_width(self, column_name):
         column_name = super().column(column_name, 'id')
+        typ = self._types.get(column_name)
 
-        values = get_values_from_enum(self._types.get(column_name))
+        values = get_values_from_enum(typ) if typ else []
         values.append(self.heading(column_name)['text'])
 
         return max(map(self._font.measure, values)) + COLUMN_TITLE_PADDING
@@ -156,7 +155,7 @@ class ExtendedTreeview(ttk.Treeview):
     def as_list_of_list(self) -> list[list[str]]:
         return [self.as_list(row_id) for row_id in self.get_children()]
 
-    def as_dict(self, row_id) -> JsonDict:
+    def as_dict(self, row_id) -> dict[str, any]:
         column_names = self["columns"]
         values = self.as_list(row_id)
 
@@ -165,7 +164,7 @@ class ExtendedTreeview(ttk.Treeview):
             if value and value.strip()
         }
 
-    def as_list_of_dict(self) -> list[JsonDict]:
+    def as_list_of_dict(self) -> list[dict[str, any]]:
         return [self.as_dict(row_id) for row_id in self.get_children()]
 
     def begin_changes(self, disable_before_change_event=False):

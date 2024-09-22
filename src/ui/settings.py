@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk, Tk, X, TOP, BOTH, DISABLED, NORMAL
 from typing import Optional
 
 from configuration.migration.all_migration import run_all_migration
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME, TITLE_ERROR
+from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME, TITLE_ERROR, APP_TITLE
 from constants.files import LOG_FILE_NAME
 from constants.log import LOG
 from constants.resources import APP_ICON
@@ -49,7 +49,7 @@ class Settings(Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.iconbitmap(APP_ICON)
-        self.title(APP_NAME_WITH_VERSION)
+        self.title(APP_TITLE)
         self.minsize(*RC_WIN_SIZE)
 
     def _setup_binds(self):
@@ -158,7 +158,7 @@ class Settings(Tk):
 
                 message = ("There are unsaved changes. "
                            "Do you want to save them before exiting?")
-                result = messagebox.askyesnocancel(APP_NAME_WITH_VERSION, message)
+                result = messagebox.askyesnocancel(APP_TITLE, message)
 
                 if result is None:
                     return False
@@ -172,7 +172,7 @@ class Settings(Tk):
                 message = (
                     f"There are errors in the rules, and they must be corrected before the application can work properly. "
                     f"Do you still want to close the {SETTINGS_TITLE}?")
-                result = messagebox.askyesno(APP_NAME_WITH_VERSION, message)
+                result = messagebox.askyesno(APP_TITLE, message)
 
                 if not result:
                     return False

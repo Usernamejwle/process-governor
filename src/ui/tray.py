@@ -3,7 +3,7 @@ from PIL import Image
 from pystray import MenuItem, Menu
 from pystray._win32 import Icon
 
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.app_info import APP_NAME_WITH_VERSION, APP_TITLE
 from constants.resources import APP_ICON
 from constants.ui import OPEN_LOG_LABEL, OPEN_CONFIG_LABEL
 from ui.settings import open_settings, is_opened_settings, get_settings
@@ -58,4 +58,4 @@ def init_tray() -> Icon:
         MenuItem('Quit', close_app),
     )
 
-    return pystray.Icon("tray_icon", image, APP_NAME, menu)
+    return pystray.Icon("tray_icon", image, APP_TITLE, menu)

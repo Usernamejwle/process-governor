@@ -1,25 +1,25 @@
 import os.path
-from tkinter import Menu, LEFT, END, NORMAL, DISABLED
 from typing import Callable, Optional
 
 from PIL import ImageTk
 from pydantic import BaseModel
 
+from configuration.rule import ProcessRule, ServiceRule
 from constants.log import LOG
-from constants.resources import UI_ADD_PROCESS_RULE, UI_ADD_SERVICE_RULE, UI_COPY, UI_SERVICE, \
-    UI_PROCESS, UI_OPEN_FOLDER
+from constants.resources import UI_SERVICE, \
+    UI_PROCESS
 from constants.threads import THREAD_PROCESS_LIST_ICONS
-from constants.ui import CMENU_ADD_PROCESS_RULE_LABEL, CMENU_ADD_SERVICE_RULE_LABEL, COLUMN_WIDTH_WITH_ICON, \
-    CMENU_COPY_LABEL, ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE, CMENU_OPEN_PROCESS_FOLDER
+from constants.ui import COLUMN_WIDTH_WITH_ICON, \
+    ERROR_TRYING_UPDATE_TERMINATED_TKINTER_INSTANCE
 from enums.filters import FilterByProcessType
 from enums.rules import RuleType
 from enums.selector import SelectorType
 from model.process import Process
 from ui.widget.common.treeview.pydantic import PydanticTreeviewLoader
 from ui.widget.common.treeview.sortable import SortableTreeview
-from util.files import explore
+from ui.widget.settings.tabs.processes.process_list_context_menu import ProcessContextMenu
 from util.scheduler import TaskScheduler
-from util.ui import load_img, trim_cmenu_label
+from util.ui import load_img
 from util.utils import get_icon_from_exe
 
 
@@ -28,6 +28,8 @@ class ProcessList(SortableTreeview):
             self,
             model: type[BaseModel],
             add_rule_command: Callable[[RuleType, Optional[SelectorType]], None],
+            find_rules_by_process_command: Callable[[Process], list[tuple[str, ProcessRule | ServiceRule]]],
+            go_to_rule_command: Callable[[str, RuleType], None],
             *args, **kwargs
     ):
         columns = [key for key, field_info in model.model_fields.items() if not field_info.exclude]
@@ -50,112 +52,12 @@ class ProcessList(SortableTreeview):
         self._service_icon = load_img(UI_SERVICE)
         self._icons = {}
 
-        self._add_rule: Callable[[RuleType, Optional[SelectorType]], None] = add_rule_command
         self._data: dict[int, Process] = {}
         self._loader = PydanticTreeviewLoader(self, model)
-        self._setup_context_menu()
+        self._setup_context_menu(add_rule_command, find_rules_by_process_command, go_to_rule_command)
 
     def set_data(self, values: dict[int, Process]):
         self._data = values
-
-    def _setup_context_menu(self):
-        self._context_menu_icons = icons = {
-            CMENU_ADD_PROCESS_RULE_LABEL: load_img(UI_ADD_PROCESS_RULE),
-            CMENU_ADD_SERVICE_RULE_LABEL: load_img(UI_ADD_SERVICE_RULE),
-            CMENU_COPY_LABEL: load_img(UI_COPY),
-            CMENU_OPEN_PROCESS_FOLDER: load_img(UI_OPEN_FOLDER),
-        }
-        self._context_menu = menu = Menu(self, tearoff=0)
-        self._process_menu = Menu(menu, tearoff=0)
-        self._copy_menu = Menu(menu, tearoff=0)
-
-        menu.add_cascade(
-            label=CMENU_ADD_PROCESS_RULE_LABEL,
-            menu=self._process_menu,
-            image=icons[CMENU_ADD_PROCESS_RULE_LABEL],
-            compound=LEFT
-        )
-
-        menu.add_command(
-            label=CMENU_ADD_SERVICE_RULE_LABEL,
-            command=lambda: self._add_rule(RuleType.SERVICE, None),
-            image=icons[CMENU_ADD_SERVICE_RULE_LABEL],
-            compound=LEFT
-        )
-
-        menu.add_separator()
-
-        menu.add_cascade(
-            label=CMENU_COPY_LABEL,
-            menu=self._copy_menu,
-            image=icons[CMENU_COPY_LABEL],
-            compound=LEFT
-        )
-
-        menu.add_command(
-            label=CMENU_OPEN_PROCESS_FOLDER,
-            command=self._open_process_folder,
-            image=icons[CMENU_OPEN_PROCESS_FOLDER],
-            compound=LEFT
-        )
-
-        self.bind("<Button-3>", self._show_context_menu, '+')
-
-    def _open_process_folder(self):
-        selected_item = self.selection()
-
-        if not selected_item:
-            return
-
-        row = self.as_model(selected_item[0])
-        explore(row.bin_path)
-
-    def _show_context_menu(self, event):
-        context_menu = self._context_menu
-        process_list = self
-        row_id = process_list.identify_row(event.y)
-
-        if row_id:
-            process_list.selection_set(row_id)
-            row = self.as_model(row_id)
-            process_exists = self._update_process_menu(row)
-            self._update_copy_menu(row)
-
-            self._context_menu.entryconfig(CMENU_ADD_PROCESS_RULE_LABEL, state=NORMAL if process_exists else DISABLED)
-            self._context_menu.entryconfig(CMENU_ADD_SERVICE_RULE_LABEL, state=NORMAL if row.service else DISABLED)
-            self._context_menu.entryconfig(CMENU_OPEN_PROCESS_FOLDER,
-                                           state=NORMAL if os.path.isfile(row.bin_path or '') else DISABLED)
-
-            context_menu.post(event.x_root, event.y_root)
-
-    def _update_process_menu(self, row):
-        process_menu = self._process_menu
-        exists = False
-
-        process_menu.delete(0, END)
-
-        if row.process_name:
-            exists = True
-            process_menu.add_command(
-                label=f"By {SelectorType.NAME.value}: {row.process_name}",
-                command=lambda: self._add_rule(RuleType.PROCESS, SelectorType.NAME)
-            )
-
-        if row.bin_path:
-            exists = True
-            process_menu.add_command(
-                label=trim_cmenu_label(f"By {SelectorType.PATH.value}: {row.bin_path}"),
-                command=lambda: self._add_rule(RuleType.PROCESS, SelectorType.PATH)
-            )
-
-        if row.cmd_line:
-            exists = True
-            process_menu.add_command(
-                label=trim_cmenu_label(f"By {SelectorType.CMDLINE.value}: {row.cmd_line}"),
-                command=lambda: self._add_rule(RuleType.PROCESS, SelectorType.CMDLINE)
-            )
-
-        return exists
 
     def set_display_columns(self, filter_by_type):
         display_columns = list(self['columns'])
@@ -220,30 +122,6 @@ class ProcessList(SortableTreeview):
         pid = int(self.as_dict(row_id)['pid'])
         return self._data[pid]
 
-    def _update_copy_menu(self, row):
-        copy_menu = self._copy_menu
-        copy_menu.delete(0, END)
-
-        values = [
-            row.pid,
-            row.process_name,
-            row.service_name,
-            row.bin_path,
-            row.cmd_line
-        ]
-
-        values = map(lambda o: str(o) if o else '', values)
-        values = filter(lambda o: o, values)
-        values = [*dict.fromkeys(values)]
-
-        for value in values:
-            copy_menu.add_command(label=trim_cmenu_label(value), command=lambda v=value: self._copy_to_clipboard(v))
-
-    def _copy_to_clipboard(self, text):
-        self.clipboard_clear()
-        self.clipboard_append(text)
-        self.update()
-
     def get_process_icon(self, process: Process):
         bin_path = process.bin_path
 
@@ -270,3 +148,13 @@ class ProcessList(SortableTreeview):
 
         self._icons[bin_path] = image
         return image
+
+    def _setup_context_menu(
+            self,
+            add_rule_command: Callable[[RuleType, Optional[SelectorType]], None],
+            find_rules_by_process_command: Callable[[Process], list[tuple[str, ProcessRule | ServiceRule]]],
+            go_to_rule_command: Callable[[str, RuleType], None]
+    ):
+        self._context_menu = ProcessContextMenu(self, add_rule_command, find_rules_by_process_command,
+                                                go_to_rule_command)
+        self.bind("<Button-3>", self._context_menu.show, '+')
