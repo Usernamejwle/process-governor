@@ -85,7 +85,8 @@ class RulesService(ABC):
                 if param in ignored_parameters:
                     continue
 
-                logger_string = f"{param.value} `{logger_value}` for {process.process_name} ({process.pid})"
+                service_name = f", {process.service_name}" if process.service else ''
+                logger_string = f"{param.value} `{logger_value}` for {process.process_name} ({process.pid}{service_name})"
 
                 try:
                     if method(process, rule):
