@@ -3,7 +3,10 @@ import sys
 
 import psutil
 
-from constants.any import LOCK_FILE_NAME
+from constants.app_info import APP_PROCESSES
+from constants.files import LOCK_FILE_NAME
+from constants.log import LOG
+from util.messages import show_error
 
 
 def is_process_running(pid):
@@ -18,7 +21,8 @@ def is_process_running(pid):
     """
     try:
         process = psutil.Process(pid)
-        return process.is_running()
+        process_name = process.name()
+        return process.is_running() and process_name in APP_PROCESSES
     except psutil.NoSuchProcess:
         return False
 
@@ -40,6 +44,11 @@ def create_lock_file():
             pid_str = file.read().strip()
             if pid_str:
                 if is_process_running(int(pid_str)):
+                    message = ("The application is already running.\n"
+                               "Please close the existing instance before starting a new one.")
+
+                    LOG.error(message)
+                    show_error(message)
                     sys.exit(1)
 
     # Create the lock file with the current process's PID

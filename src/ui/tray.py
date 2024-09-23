@@ -1,49 +1,29 @@
-import os
-import webbrowser
-
 import pystray
 from PIL import Image
 from pystray import MenuItem, Menu
 from pystray._win32 import Icon
 
-from constants.any import CONFIG_FILE_NAME, LOG_FILE_NAME
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
+from constants.app_info import APP_NAME_WITH_VERSION, APP_TITLE
 from constants.resources import APP_ICON
-from constants.updates import UPDATE_URL
-from ui.editor import open_rule_editor
-from util.messages import yesno_error_box, show_error, show_info
+from constants.ui import OPEN_LOG_LABEL, OPEN_CONFIG_LABEL
+from ui.settings import open_settings, is_opened_settings, get_settings
+from util.files import open_log_file, open_config_file
 from util.startup import toggle_startup, is_in_startup
-from util.updates import check_latest_version
+from util.updates import check_updates
 from util.utils import is_portable
 
 
-def check_updates():
-    """
-    Check for updates and display appropriate messages depending on the result.
+def close_app(item):
+    if not is_opened_settings():
+        return item.stop()
 
-    Returns:
-        None
-    """
+    settings = get_settings()
 
-    latest_version = check_latest_version()
+    def close():
+        if settings.close():
+            item.stop()
 
-    if latest_version is None:
-        show_error(
-            f"Error Detected - {APP_NAME_WITH_VERSION}",
-            "Failed to check for updates. Please check your internet connection."
-        )
-    elif not latest_version:
-        show_info(
-            APP_NAME_WITH_VERSION,
-            "You are using the latest version."
-        )
-    else:
-        message = (
-            f"A new version {latest_version} is available. Would you like to update {APP_NAME} now?"
-        )
-
-        if yesno_error_box(APP_NAME_WITH_VERSION, message):
-            webbrowser.open(UPDATE_URL, new=0, autoraise=True)
+    settings.after_idle(close)
 
 
 def init_tray() -> Icon:
@@ -56,18 +36,11 @@ def init_tray() -> Icon:
     image: Image = Image.open(APP_ICON)
 
     menu: tuple[MenuItem, ...] = (
-        MenuItem(APP_NAME_WITH_VERSION, None, enabled=False),
+        MenuItem(APP_NAME_WITH_VERSION, lambda item: open_settings(), default=True),
         Menu.SEPARATOR,
 
-        MenuItem('Configure Rules', lambda item: open_rule_editor(), default=True),
-        Menu.SEPARATOR,
-
-        MenuItem('Open config file', lambda item: os.startfile(CONFIG_FILE_NAME)),
-        MenuItem(
-            'Open log file',
-            lambda item: os.startfile(LOG_FILE_NAME),
-            visible=lambda item: os.path.isfile(LOG_FILE_NAME)
-        ),
+        MenuItem(OPEN_CONFIG_LABEL, lambda _: open_config_file()),
+        MenuItem(OPEN_LOG_LABEL, lambda _: open_log_file()),
         Menu.SEPARATOR,
 
         MenuItem(
@@ -82,7 +55,7 @@ def init_tray() -> Icon:
         ),
         Menu.SEPARATOR,
 
-        MenuItem('Quit', lambda item: item.stop()),
+        MenuItem('Quit', close_app),
     )
 
-    return pystray.Icon("tray_icon", image, APP_NAME, menu)
+    return pystray.Icon("tray_icon", image, APP_TITLE, menu)

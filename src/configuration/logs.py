@@ -17,13 +17,13 @@ class Logs(BaseModel):
     A boolean flag to enable or disable logging. Default is True (logging is enabled).
     """
 
-    level: Literal['CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'] = Field(default='INFO')
+    level: Literal['CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'] = Field(default='DEBUG')
     """
-    The log level for filtering log messages. Default is 'WARN'.
+    The log level for filtering log messages. Default is 'INFO'.
     Valid log levels include: 'CRITICAL', 'FATAL', 'ERROR', 'WARNING', 'WARN', 'INFO', 'DEBUG', 'NOTSET'.
     """
 
-    maxBytes: int = Field(default=1024)
+    maxBytes: int = Field(default=1024 * 1024)
     """
     The maximum size (in bytes) of the log file. When the log file exceeds this size, it will be rotated.
     Default is 1 megabyte (1024 * 1024 bytes).
@@ -32,7 +32,7 @@ class Logs(BaseModel):
     backupCount: int = Field(default=1)
     """
     The number of backup log files to keep. When log rotation occurs, old log files beyond this count will be deleted.
-    Default is 2 backup log files.
+    Default is 1 backup log files.
     """
 
     def level_as_int(self):

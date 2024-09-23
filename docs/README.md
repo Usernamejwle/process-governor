@@ -1,30 +1,28 @@
-![Logo Process Governor](images/github-banner-readme.png)
-
-[![RU](icons/ru.png) Русская версия](README.ru.md)
+![Logo Process Governor](images/headers/github-banner-readme.png)
 
 ---
 
 **Process Governor** is a Python utility designed to manage Windows processes and services by adjusting their
 priorities, I/O priorities, and core affinity based on user-defined rules.
 
-<details>
-   <summary>Screenshots</summary>
-
-   >![tray_menu_screenshot.png](images/tray_menu_screenshot.png)
-   > 
-   >![audio_artiacle_rule_configurator_screenshot.png](images/audio_artiacle_rule_configurator_screenshot.png)
-   > 
-   >![rule_configurator_with_error_screenshot.png](images/rule_configurator_with_error_screenshot.png)
-</details>
-
-## Features
+### Features
 
 - Adjust process and service priorities for better performance.
 - Control I/O priorities to optimize resource utilization.
 - Define core affinity for processes.
-- Fine-tune Windows services and processes based on [user-defined rules](ui_rule_configurator.md).
-- Continuous monitoring of the configuration file for rule application.
-- Ability to add ProcessGovernor to autorun.
+- Fine-tune Windows services and processes based on user-defined rules.
+
+### Screenshots
+
+<details>
+    <summary>Click to expand</summary>
+
+> ![process_list.png](images/screenshots/process_list.png)
+>
+> ![process_rules.png](images/screenshots/process_rules.png)
+>
+> ![tray_menu.png](images/screenshots/tray_menu.png)
+</details>
 
 ## Getting started
 
@@ -35,18 +33,19 @@ To get started with **Process Governor**, follow these steps:
 2. Run the `Process Governor.exe` executable with **administrative privileges**.
    This is important to allow the program to make the necessary adjustments to process and service priorities, I/O
    priorities, and core affinity.
-3. [Configure the rules](ui_rule_configurator.md) for processes and services.
+3. Configure the rules for processes and services.
+4. **Optionally**, you can enable auto-start for the program to launch automatically with
+   the system.
 
 You can close the program by accessing the tray icon.
 
 ## Knowledge base
 
-- [Configuring rules](ui_rule_configurator.md)
+- [Process Governor UI](ui_process_governor.md)
+- [Rule Behavior and Tips](rule_behavior_and_tips.md)
 - [Configuration file](configuration_file.md)
 - [Running from source and creating a portable build](run_and_build.md)
-- **Tips and Tricks**
-  - [Optimizing Audio](tips'n'tricks/audio.md)
-  - [Optimizing Games](tips'n'tricks/game_optimization.md)
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](../LICENSE) file for details.

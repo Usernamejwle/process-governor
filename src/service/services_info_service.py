@@ -1,11 +1,9 @@
 from abc import ABC
-from typing import Optional
 
 import psutil
 from psutil import STATUS_STOPPED, NoSuchProcess, ZombieProcess, AccessDenied
 from psutil._pswindows import WindowsService
 
-from constants.any import LOG
 from model.service import Service
 from util.decorators import suppress_exception
 
@@ -24,52 +22,49 @@ WindowsService._query_config = suppress_exception(
 
 class ServicesInfoService(ABC):
     """
-    The ServicesInfoService class provides methods for retrieving information about running services.
-    It is an abstract base class (ABC) to be subclassed by specific implementation classes.
+    The ServicesInfoService class provides methods for retrieving information about Windows services.
     """
 
     @staticmethod
-    def get_list() -> dict[int, Service]:
-        """
-        Get a dictionary of running services and their information.
-
-        Returns:
-            dict[int, Service]: A dictionary where keys are process IDs (pids) and values are Service objects
-            representing the running services.
-        """
+    def get_running_services() -> dict[int, Service]:
         result: dict[int, Service] = {}
 
         for service in psutil.win_service_iter():
             try:
-                info = service.as_dict()
+                # noinspection PyUnresolvedReferences
+                info = service._query_status()
+                status = info['status']
+                pid = info['pid']
 
-                if info['status'] == STATUS_STOPPED:
+                if pid == STATUS_STOPPED:
                     continue
 
-                result[info['pid']] = Service(
-                    info['pid'],
-                    info['name'],
-                    info['display_name'],
-                    info['description'],
-                    info['status'],
-                    info['binpath']
+                result[pid] = Service(
+                    pid,
+                    service.name(),
+                    service.display_name(),
+                    status
                 )
             except NoSuchProcess:
-                LOG.warning(f"No such service: {service.name}")
+                pass
 
         return result
 
-    @classmethod
-    def get_by_pid(cls, pid: int, dct: dict[int, Service]) -> Optional[Service]:
-        """
-        Get a Service object by its process ID (pid) from the provided dictionary.
+    @staticmethod
+    def get_services() -> list[Service]:
+        result: list[Service] = []
 
-        Args:
-            pid (int): The process ID (pid) of the service to retrieve.
-            dct (dict[int, Service]): A dictionary of services where keys are process IDs (pids) and values are
-            Service objects.
+        for service in psutil.win_service_iter():
+            try:
+                # noinspection PyUnresolvedReferences
+                info = service._query_status()
 
-        Returns:
-            Optional[Service]: The Service object if found, or None if not found.
-        """
-        return dct.get(pid)
+                result.append(Service(
+                    info['pid'],
+                    service.name(),
+                    info['status']
+                ))
+            except NoSuchProcess:
+                pass
+
+        return result

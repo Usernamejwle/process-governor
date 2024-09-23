@@ -1,9 +1,10 @@
 from win32api import MessageBoxEx
 
+from constants.app_info import APP_NAME_WITH_VERSION, TITLE_ERROR, APP_TITLE
 from enums.messages import MBIcon, MBButton, MBResult
 
 
-def message_box(title: str, message: str, icon: MBIcon, btn: MBButton) -> MBResult:
+def _message_box(title: str, message: str, icon: MBIcon, btn: MBButton) -> MBResult:
     """
     Display a message box with the specified title, message, icon, and button.
 
@@ -19,37 +20,21 @@ def message_box(title: str, message: str, icon: MBIcon, btn: MBButton) -> MBResu
     return MessageBoxEx(None, message, title, icon | btn)
 
 
-def yesno_error_box(title: str, message: str) -> bool:
-    """
-    Display a yes/no error message box with a specified title and message.
-
-    Args:
-        title (str): The title of the message box.
-        message (str): The message to be displayed in the message box.
-
-    Returns:
-        bool: True if the user clicks "Yes," False if the user clicks "No."
-    """
-    return message_box(title, message, MBIcon.ERROR, MBButton.YESNO) == MBResult.YES
+def show_info(message: str, title: str = APP_TITLE):
+    _message_box(title, message, MBIcon.INFORMATION, MBButton.OK)
 
 
-def show_error(title, message):
-    """
-    Show an error message box with the given title and message.
-
-    Parameters:
-        title (str): The title of the error message box.
-        message (str): The message to display in the error message box.
-    """
-    message_box(title, message, MBIcon.ERROR, MBButton.OK)
+def yesno_info_box(message: str, title: str = APP_TITLE) -> bool:
+    return _message_box(title, message, MBIcon.INFORMATION, MBButton.YESNO) == MBResult.YES
 
 
-def show_info(title, message):
-    """
-    Show an info message box with the given title and message.
+def yesno_question_box(message: str, title: str = APP_TITLE) -> bool:
+    return _message_box(title, message, MBIcon.QUESTION, MBButton.YESNO) == MBResult.YES
 
-    Parameters:
-        title (str): The title of the error message box.
-        message (str): The message to display in the error message box.
-    """
-    message_box(title, message, MBIcon.INFORMATION, MBButton.OK)
+
+def show_error(message: str, title: str = TITLE_ERROR):
+    _message_box(title, message, MBIcon.ERROR, MBButton.OK)
+
+
+def yesno_error_box(message: str, title: str = TITLE_ERROR) -> bool:
+    return _message_box(title, message, MBIcon.ERROR, MBButton.YESNO) == MBResult.YES

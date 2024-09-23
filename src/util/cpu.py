@@ -1,11 +1,11 @@
 from functools import lru_cache
-from typing import Optional, List
+from typing import Optional
 
 from psutil import cpu_count
 
 
 @lru_cache
-def parse_affinity(in_affinity: str) -> List[int]:
+def parse_affinity(in_affinity: str) -> list[int]:
     """
     Parse a CPU core affinity string and return a list of core numbers.
 
@@ -13,7 +13,7 @@ def parse_affinity(in_affinity: str) -> List[int]:
         in_affinity (str): The CPU core affinity string to parse.
 
     Returns:
-        Optional[List[int]]: A list of CPU core numbers specified in the affinity string.
+        Optional[list[int]]: A list of CPU core numbers specified in the affinity string.
     """
     if in_affinity is None:
         raise ValueError("empty value")
@@ -24,7 +24,7 @@ def parse_affinity(in_affinity: str) -> List[int]:
         raise ValueError("empty string")
 
     affinity = affinity.split(";")
-    cores: List[int] = []
+    cores: list[int] = []
 
     try:
         for el in affinity:
@@ -43,12 +43,12 @@ def parse_affinity(in_affinity: str) -> List[int]:
     return cores
 
 
-def format_affinity(cores: List[int]) -> Optional[str]:
+def format_affinity(cores: list[int]) -> Optional[str]:
     """
         Format a list of CPU core numbers into an affinity string.
 
         Args:
-            cores (List[int]): A list of CPU core numbers.
+            cores (list[int]): A list of CPU core numbers.
 
         Returns:
             Optional[str]: An affinity string.

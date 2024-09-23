@@ -1,9 +1,9 @@
 import sys
 
-from constants.any import STARTUP_TASK_NAME
+from constants.app_info import STARTUP_TASK_NAME
 from constants.resources import STARTUP_SCRIPT
-from util.scheduler import TaskScheduler
 from util.utils import is_portable
+from util.windows_scheduler import WindowsTaskScheduler
 
 
 def is_in_startup():
@@ -13,7 +13,7 @@ def is_in_startup():
     Returns:
         bool: True if the application is set to run during system startup, False otherwise.
     """
-    return TaskScheduler.check_task(STARTUP_TASK_NAME)
+    return WindowsTaskScheduler.check_task(STARTUP_TASK_NAME)
 
 
 def add_to_startup():
@@ -23,7 +23,7 @@ def add_to_startup():
     if is_in_startup():
         return
 
-    TaskScheduler.create_startup_task(
+    WindowsTaskScheduler.create_startup_task(
         STARTUP_TASK_NAME,
         f"'{STARTUP_SCRIPT}' '{sys.executable}'"
     )
@@ -34,7 +34,7 @@ def remove_from_startup():
     Remove the current application from the system's startup programs.
     """
     if is_in_startup():
-        TaskScheduler.delete_task(STARTUP_TASK_NAME)
+        WindowsTaskScheduler.delete_task(STARTUP_TASK_NAME)
 
 
 def toggle_startup():

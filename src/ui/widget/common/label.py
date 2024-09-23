@@ -1,18 +1,16 @@
 import re
-import tkinter as tk
-from tkinter import font
-from tkinter.ttk import Label
+from tkinter import font, END, Text, ttk, Label
 
 from util.ui import get_parent_with_bg, get_label_font
 
 
-class WrappingLabel(tk.Label):
+class WrappingLabel(Label):
     def __init__(self, master=None, **kwargs):
-        tk.Label.__init__(self, master, **kwargs)
+        Label.__init__(self, master, **kwargs)
         self.bind('<Configure>', lambda e: self.config(wraplength=self.winfo_width()), '+')
 
 
-class RichLabel(tk.Text):
+class RichLabel(Text):
     def __init__(self, *args, text="", textvariable=None, **kwargs):
         kwargs.setdefault("borderwidth", 0)
         kwargs.setdefault("relief", "flat")
@@ -56,7 +54,6 @@ class RichLabel(tk.Text):
         if text:
             self.configure(text=text)
 
-        self.bind("<FocusIn>", lambda e: self.focus_set(), '+')
         self.bind("<1>", lambda event: "break", '+')
         self.bind("<Double-1>", lambda event: "break", '+')
         self.bind("<Triple-1>", lambda event: "break", '+')
@@ -84,7 +81,7 @@ class RichLabel(tk.Text):
 
     def _on_text_changed(self, event):
         if self._textvariable:
-            self._textvariable.set(self.get("1.0", tk.END))
+            self._textvariable.set(self.get("1.0", END))
 
     def config(self, **kwargs):
         text = kwargs.pop('text', None)
@@ -96,7 +93,7 @@ class RichLabel(tk.Text):
             super().config(**kwargs)
 
     def _set_text(self, text):
-        self.delete("1.0", tk.END)
+        self.delete("1.0", END)
 
         tokens = self._tokenize(text)
         pos = "1.0"
@@ -156,7 +153,7 @@ class RichLabel(tk.Text):
         return self.config(**kwargs)
 
 
-class Image(Label):
+class Image(ttk.Label):
     def __init__(self, *args, image=None, **kwargs):
         self._image = image
         super().__init__(*args, image=image, **kwargs)

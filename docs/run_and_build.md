@@ -1,6 +1,6 @@
 # Running from source and creating a portable build
 
-[![README](icons/readme.png) README](README.md) | [![RU](icons/ru.png) Русская версия](run_and_build.ru.md)
+[![README](icons/readme.png) README](README.md)
 
 ---
 

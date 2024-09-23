@@ -1,5 +1,4 @@
 import os
-from threading import Thread
 from time import sleep
 from typing import Optional
 
@@ -8,16 +7,20 @@ from psutil._pswindows import Priority, IOPriority
 from pystray._win32 import Icon
 
 from configuration.config import Config
-from constants.any import LOG, LOG_FILE_NAME
-from constants.app_info import APP_NAME_WITH_VERSION, APP_NAME
-from constants.ui import RC_TITLE
+from configuration.migration.all_migration import run_all_migration
+from constants.app_info import APP_NAME
+from constants.files import LOG_FILE_NAME
+from constants.log import LOG
+from constants.threads import THREAD_SETTINGS, THREAD_TRAY
+from constants.ui import SETTINGS_TITLE
 from service.config_service import ConfigService
 from service.rules_service import RulesService
-from ui.editor import open_rule_editor, is_editor_open
+from ui.settings import open_settings
 from ui.tray import init_tray
-from util.logs import log_setup
 from util.messages import yesno_error_box, show_error
+from util.scheduler import TaskScheduler
 from util.startup import update_startup
+from util.updates import check_updates
 
 
 def priority_setup():
@@ -42,8 +45,7 @@ def main_loop(tray: Icon):
         tray (Icon): The system tray icon instance to be managed within the loop. It will be stopped gracefully
             when the loop exits.
     """
-    thread = Thread(target=tray.run)
-    thread.start()
+    TaskScheduler.schedule_task(THREAD_TRAY, tray.run)
 
     LOG.info('Application started')
 
@@ -51,10 +53,14 @@ def main_loop(tray: Icon):
     is_changed: bool
     last_error_message = None
 
-    while thread.is_alive():
+    while TaskScheduler.check_task(THREAD_TRAY):
         try:
             config, is_changed = ConfigService.reload_if_changed(config)
-            RulesService.apply_rules(config, is_changed)
+
+            if is_changed:
+                LOG.info("Configuration file has been modified. Reloading all rules to apply changes.")
+
+            RulesService.apply_rules(config, not is_changed)
             last_error_message = None
         except KeyboardInterrupt as e:
             raise e
@@ -88,9 +94,10 @@ def start_app():
     tray: Optional[Icon] = None
 
     try:
+        run_all_migration()
         update_startup()
-        log_setup()
         priority_setup()
+        check_updates(True)
 
         tray: Icon = init_tray()
         main_loop(tray)
@@ -105,20 +112,18 @@ def start_app():
 
 
 def show_rules_error_message():
-    title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     message = "An error has occurred while loading or applying the rules.\n"
 
-    if is_editor_open:
+    if TaskScheduler.check_task(THREAD_SETTINGS):
         message += "Please check the correctness of the rules."
-        show_error(title, message)
+        show_error(message)
     else:
-        message += f"Would you like to open the {RC_TITLE} to review and correct the rules?"
-        if yesno_error_box(title, message):
-            open_rule_editor()
+        message += f"Would you like to open the {SETTINGS_TITLE} to review and correct the rules?"
+        if yesno_error_box(message):
+            open_settings()
 
 
 def show_abstract_error_message(will_closed: bool):
-    title = f"Error Detected - {APP_NAME_WITH_VERSION}"
     will_closed_text = 'The application will now close.' if will_closed else ''
     message = (
         f"An error has occurred in the {APP_NAME} application. {will_closed_text}\n"
@@ -126,5 +131,5 @@ def show_abstract_error_message(will_closed: bool):
         f"Would you like to open the log file?"
     )
 
-    if yesno_error_box(title, message):
+    if yesno_error_box(message):
         os.startfile(LOG_FILE_NAME)

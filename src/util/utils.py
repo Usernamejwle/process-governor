@@ -1,27 +1,75 @@
+import re
 import sys
-from fnmatch import fnmatch
-from functools import lru_cache
+from enum import Enum
+from functools import lru_cache, cache
+from re import Pattern
 from types import NoneType
-from typing import get_origin, get_args, Union, Annotated
+from typing import get_origin, get_args, Union, Annotated, Optional
+
+import win32api
+import win32con
+import win32gui
+import win32ui
+from PIL import Image
+
+
+@cache
+def path_pattern_to_regex(pattern: str) -> Optional[Pattern]:
+    """
+    Converts a glob-like path pattern to a regular expression, with partial support for glob syntax.
+
+    Args:
+        pattern (str): The path pattern to convert.
+
+    Returns:
+        re.Pattern: The compiled regular expression.
+
+    Supports:
+        - "*" matches any sequence of characters except the path separator.
+        - "?" matches any single character except the path separator.
+        - "**/" matches any number of nested directories.
+    """
+
+    pattern = pattern.strip()
+
+    if not pattern:
+        return None
+
+    pattern = re.escape(pattern.replace('\\', '/'))
+    pattern = pattern.replace(r'/', '[/]')
+    pattern = pattern.replace('\\*\\*[/]', '(.*[/])?')
+    pattern = pattern.replace('\\?', '[^/]')
+    pattern = pattern.replace('\\*', '[^/]*')
+    pattern = pattern.replace('/', r'\\/')
+
+    return re.compile(f"^{pattern}$", re.IGNORECASE)
 
 
 @lru_cache
-def fnmatch_cached(name: str, pattern: str) -> bool:
+def path_match(pattern: str, value: str) -> bool:
     """
-    Check if a name matches a pattern using fnmatch, with caching.
+    Checks if any of the provided values match the given pattern.
 
     Args:
-        name (str): The name to check.
-        pattern (str): The pattern to match against.
+        pattern (str): The pattern to match against, supporting wildcards.
+        value (str): The value to test against the pattern.
 
     Returns:
-        bool: True if the name matches the pattern, False otherwise.
+        bool: True if any value matches the pattern, False otherwise.
     """
 
-    if pattern:
-        pattern = pattern.strip()
+    if not pattern:
+        return False
 
-    return pattern and fnmatch(name, pattern)
+    if pattern == value:
+        return True
+
+    regex = path_pattern_to_regex(pattern)
+
+    if not pattern:
+        return False
+
+    return regex.match(value) is not None
 
 
 def is_portable():
@@ -91,3 +139,98 @@ def is_optional_type(annotation):
             if arg == NoneType or is_optional_type(arg):
                 return True
     return False
+
+
+def none_int(value: str) -> Optional[int]:
+    return int(value) if value else None
+
+
+def get_values_from_enum(annotation):
+    origin_type = extract_type(annotation)
+    values = []
+
+    if not issubclass(origin_type, Enum):
+        return values
+
+    if is_optional_type(annotation):
+        values.append('')
+
+    for e in origin_type:
+        values.append(str(e.value))
+
+    return values
+
+
+@cache
+def get_icon_from_exe(exe_path, icon_index=0, large=False):
+    if large:
+        icon_size = (
+            win32api.GetSystemMetrics(win32con.SM_CXICON),
+            win32api.GetSystemMetrics(win32con.SM_CYICON)
+        )
+    else:
+        icon_size = (
+            win32api.GetSystemMetrics(win32con.SM_CXSMICON),
+            win32api.GetSystemMetrics(win32con.SM_CYSMICON)
+        )
+
+    hdc = None
+    hdc_mem = None
+    bmp = None
+    list_of_large_hicon = []
+    list_of_small_hicon = []
+
+    try:
+        list_of_large_hicon, list_of_small_hicon = win32gui.ExtractIconEx(exe_path, icon_index)
+        list_of_hicon = list_of_large_hicon if large else list_of_small_hicon
+
+        if not list_of_hicon:
+            return
+
+        hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+        hdc_mem = hdc.CreateCompatibleDC()
+
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(hdc, icon_size[0], icon_size[1])
+
+        hdc_mem.SelectObject(bmp)
+
+        win32gui.DrawIconEx(
+            hdc_mem.GetSafeHdc(),
+            0,
+            0,
+            list_of_hicon[0],
+            icon_size[0],
+            icon_size[1],
+            0,
+            None,
+            win32con.DI_NORMAL
+        )
+
+        bmp_info = bmp.GetInfo()
+        bmp_bits = bmp.GetBitmapBits(True)
+
+        return Image.frombuffer(
+            'RGBA',
+            (bmp_info['bmWidth'], bmp_info['bmHeight']),
+            bmp_bits, 'raw', 'BGRA', 0, 1
+        )
+    finally:
+        if bmp:
+            handle = bmp.GetHandle()
+
+            if handle:
+                win32gui.DeleteObject(handle)
+
+        if hdc_mem:
+            hdc_mem.DeleteDC()
+
+        if hdc:
+            hdc.DeleteDC()
+            win32gui.ReleaseDC(0, hdc.GetSafeHdc())
+
+        for hicon in list_of_large_hicon:
+            win32gui.DestroyIcon(hicon)
+
+        for hicon in list_of_small_hicon:
+            win32gui.DestroyIcon(hicon)

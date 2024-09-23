@@ -1,194 +1,183 @@
-import tkinter as tk
-from dataclasses import dataclass
-from tkinter import ttk
-from typing import Optional, Literal, List
+from enum import Enum
+from tkinter import END, BOTH, Widget
+from typing import Optional, Literal
 
-from constants.ui import EditableTreeviewEvents, ScrollableTreeviewEvents
+from constants.ui import EditableTreeviewEvents, ScrollableTreeviewEvents, ExtendedTreeviewEvents
+from ui.widget.common.combobox import EnumCombobox
+from ui.widget.common.entry import ExtendedEntry
+from ui.widget.common.treeview.extended import CellInfo, ExtendedTreeview, RegionType
 from ui.widget.common.treeview.scrollable import ScrollableTreeview
+from util.history import HistoryManager
 from util.ui import full_visible_bbox
+from util.utils import extract_type
 
 ColumnType = Literal["text", "list"]
 
-
-@dataclass(frozen=True)
-class CellInfo:
-    column_id: str
-    row_id: str
-    column_name: str
-    value: str
-    values: List[str]
-    type: ColumnType
+_justify_mapping = {
+    "w": "left",
+    "e": "right",
+    "center": "center"
+}
 
 
 class CellEditor:
     def __init__(
             self,
-            master,
-            cell_info: CellInfo,
-            *args,
-            **kwargs
+            master: ExtendedTreeview,
+            cell_info: CellInfo
     ):
-        self._cell = cell_info
-        self._input = self._setup_widgets(master, *args, **kwargs)
+        self.cell = cell_info
+        self._setup_widgets(master)
 
-    def _setup_widgets(self, master, *args, **kwargs):
+    def _setup_widgets(self, master):
         def on_change(_):
-            self.event_generate(EditableTreeviewEvents._SAVE_CELL)
+            self.event_generate(EditableTreeviewEvents.SAVE_CELL)
+            master.focus_set()
 
         def on_escape(_):
             self.event_generate(EditableTreeviewEvents.ESCAPE)
+            master.focus_set()
 
-        if self._cell.type == "text":
-            entry_popup = ttk.Entry(master, *args, justify='center', **kwargs)
-            entry_popup.insert(0, self._cell.value)
-            entry_popup.bind("<FocusOut>", on_change, '+')
-        else:
-            entry_popup = ttk.Combobox(
+        cell = self.cell
+        column_settings = master.column(cell.column_id)
+        annotation = column_settings.get('type')
+        justify = _justify_mapping[column_settings.get('anchor', 'center')]
+
+        if issubclass(extract_type(annotation), Enum):
+            editor = EnumCombobox(
                 master,
-                *args,
-                values=self._cell.values,
-                justify='center',
+                annotation,
+                justify=justify,
                 state="readonly",
-                **kwargs
+                auto_width=False
             )
-            entry_popup.set(self._cell.value)
-            entry_popup.bind("<<ComboboxSelected>>", on_change, '+')
+            editor.set(cell.value)
+            editor.bind("<<ComboboxSelected>>", on_change, '+')
+        else:
+            editor = ExtendedEntry(master, justify=justify)
+            editor.set(cell.value)
+            editor.history.clear()
+            editor.select_range(0, END)
+            editor.bind("<FocusOut>", on_change, '+')
 
-        entry_popup.bind("<Return>", on_change, '+')
-        entry_popup.bind("<Escape>", on_escape, '+')
-        entry_popup.pack(fill=tk.BOTH)
-        entry_popup.focus_force()
+        editor.bind("<Return>", on_change, '+')
+        editor.bind("<Escape>", on_escape, '+')
+        editor.pack(fill=BOTH)
 
-        return entry_popup
+        self.widget = editor
 
     def get(self):
-        return self._input.get().strip()
+        return self.widget.get().strip()
 
     def __getattr__(self, name):
-        return getattr(self._input, name)
+        return getattr(self.widget, name)
 
 
 class EditableTreeview(ScrollableTreeview):
-    _types: dict[str, ColumnType] = {}
-    _values: dict[str, List[str]] = {}
-    _popup: Optional[CellEditor] = None
-    _cell: Optional[CellInfo] = None
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.bind("<Button-1>", self._save_and_destroy_popup, '+')
+        self._editor: Optional[Widget | CellEditor] = None
+
+        self.bind("<Button-1>", self._save_and_destroy_editor, '+')
         self.bind("<Double-1>", self._on_dbl_click, '+')
-        self.bind(ScrollableTreeviewEvents.SCROLL, self._place_popup, '+')
-        self.bind("<Configure>", lambda _: self.after(1, self._place_popup), '+')
+        self.bind(ScrollableTreeviewEvents.SCROLL, self._place_editor, '+')
+        self.bind("<Configure>", lambda _: self.after(1, self._place_editor), '+')
+        self.bind("<<SelectAll>>", lambda _: self.select_all_rows(), "+")
+        self.bind("<Delete>", lambda _: self.delete_selected_rows(), "+")
 
-    def insert(self, parent, index, iid=None, **kw):
-        result = super().insert(parent, index, iid, **kw)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
+        self._setup_history()
 
-    def delete(self, *args):
-        result = super().delete(*args)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
-
-    def set(self, item, column=None, value=None):
-        result = super().set(item, column, value)
-
-        if value is not None:
-            self.event_generate(EditableTreeviewEvents.CHANGE)
-
-        return result
-
-    def move(self, item, parent, index):
-        result = super().move(item, parent, index)
-        self.event_generate(EditableTreeviewEvents.CHANGE)
-        return result
-
-    def column_type(self, column: str, ctype: ColumnType):
-        self._types[column] = ctype
-
-    def column_values(self, column: str, values: List[str]):
-        self._values[column] = values
-
-    def get_cell_info(self, event):
-        row_id, column_id = self.identify_row(event.y), self.identify_column(event.x)
-        return self._get_cell_info(row_id, column_id)
-
-    def _get_cell_info(self, row_id, column_id):
-        if not row_id or not column_id or column_id == "#0":
-            return None
-
-        column_name = self.column(column_id)["id"]
-        cell_value = self.set(row_id, column_id)
-        values = self._values.get(column_name, [])
-        cell_type = self._types.get(column_name, "text")
-
-        return CellInfo(
-            column_id,
-            row_id,
-            column_name,
-            cell_value,
-            values,
-            cell_type
+    def _setup_history(self):
+        self.history = history = HistoryManager(
+            self._get_historical_data,
+            self._set_historical_data,
+            50
         )
 
-    def current_cell(self):
-        return self._cell
+        self.bind(ExtendedTreeviewEvents.BEFORE_CHANGE, lambda _: history.commit(), "+")
 
-    def popup(self):
-        return self._popup
+    def _get_historical_data(self):
+        return self.selection_indices(), self.as_list_of_list()
+
+    def _set_historical_data(self, indices_values):
+        try:
+            self.begin_changes(True)
+            self.clear()
+
+            indices, values = indices_values
+
+            for value in values:
+                self.insert('', 'end', values=value)
+
+            self.selection_indices_set(indices)
+        finally:
+            self.end_changes()
+
+        self.update_focus()
+
+    def editor(self) -> CellEditor:
+        return self._editor
 
     def _on_dbl_click(self, event):
-        self._destroy_popup()
-        self._cell = self.get_cell_info(event)
-        self._create_editor()
+        self.edit_cell(
+            self.identify_column(event.x),
+            self.identify_row(event.y),
+            self.identify_region(event.x, event.y)
+        )
 
-    def _create_editor(self):
-        if not self._cell:
+    def _create_editor(self, cell):
+        if cell.region != 'cell':
             return
 
-        self._popup = entry_popup = CellEditor(self, self._cell)
+        self._editor = editor = CellEditor(self, cell)
 
-        entry_popup.bind(EditableTreeviewEvents._SAVE_CELL, self._save_and_destroy_popup, '+')
-        entry_popup.bind(EditableTreeviewEvents.ESCAPE, self._destroy_popup, '+')
-        entry_popup.bind("<Destroy>", self._on_popup_destroy, '+')
+        editor.bind(EditableTreeviewEvents.SAVE_CELL, self._save_and_destroy_editor, '+')
+        editor.bind(EditableTreeviewEvents.ESCAPE, self._destroy_editor, '+')
+        editor.bind("<Destroy>", self._on_editor_destroy, '+')
 
-        self._place_popup()
+        self._place_editor()
         self.event_generate(EditableTreeviewEvents.START_EDIT_CELL)
 
-    def _place_popup(self, _=None):
-        if not self._popup:
+    def _place_editor(self, _=None):
+        editor = self._editor
+
+        if not editor:
             return
 
-        bbox = full_visible_bbox(self, self._cell.row_id, self._cell.column_id)
+        cell = editor.cell
+        bbox = full_visible_bbox(self, cell.row_id, cell.column_id)
 
         if bbox:
             x, y, width, height = bbox
-            self._popup.place(x=x, y=y, width=width, height=height)
+            editor.place(x=x, y=y, width=width, height=height)
+            editor.after(0, lambda: editor.focus_set())  # fixing focus_force not working from time to time
         else:
-            self._popup.place_forget()
+            editor.place_forget()
 
-    def _save_and_destroy_popup(self, _=None):
-        if self._popup:
-            self._save_cell_changes()
-            self._destroy_popup()
+    def _save_and_destroy_editor(self, _=None):
+        self._save_cell_changes()
+        self._destroy_editor()
 
-    def _destroy_popup(self, _=None):
-        if self._popup:
-            self._popup.destroy()
+    def _destroy_editor(self, _=None):
+        if self._editor:
+            self._editor.destroy()
 
     def _save_cell_changes(self):
-        new_value = self._popup.get()
+        editor = self._editor
 
-        if self._cell.value != new_value:
-            self.set(self._cell.row_id, self._cell.column_id, new_value)
+        if not editor:
+            return
 
-    def _on_popup_destroy(self, _=None):
-        self._popup = None
-        self._cell = None
+        new_value = editor.get()
+        cell = editor.cell
 
-    def edit_cell(self, row_id, column_id):
-        self._destroy_popup()
-        self._cell = self._get_cell_info(row_id, column_id)
-        self._create_editor()
+        if cell.value != new_value:
+            self.set(cell.row_id, cell.column_id, new_value)
+
+    def _on_editor_destroy(self, _=None):
+        self._editor = None
+
+    def edit_cell(self, column_id, row_id, region: RegionType):
+        self._destroy_editor()
+        self._create_editor(self.get_cell_info_by_ids(column_id, row_id, region))
