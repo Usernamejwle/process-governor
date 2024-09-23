@@ -21,9 +21,6 @@
 
 ## System Tray
 
-<details>
-<summary>Click to expand</summary>
-
 ![](images/screenshots/tray_menu.png)
 
 The system tray menu provides quick access to the main program functions:
@@ -35,12 +32,7 @@ The system tray menu provides quick access to the main program functions:
 - **Check for Updates**: Check for program updates.
 - **Quit**: Exit the program.
 
-</details>
-
 ## Main Window
-
-<details>
-<summary>Click to expand</summary>
 
 ![](images/screenshots/process_list.png)
 
@@ -72,12 +64,7 @@ Main action buttons are available in the settings interface:
 
 Unsaved changes are marked with an asterisk (`*`) on the corresponding rule tab.
 
-</details>
-
 ## Process List
-
-<details>
-<summary>Click to expand</summary>
 
 ![](images/screenshots/process_list_only.png)
 
@@ -116,12 +103,7 @@ The process list provides important information about running processes:
 - **File Properties**: Open file properties.
 - **Service Properties**: Open service properties.
 
-</details>
-
 ## Rule Lists
-
-<details>
-<summary>Click to expand</summary>
 
 ![](images/screenshots/process_rules.png)
 
@@ -232,4 +214,3 @@ Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**
 - If incorrect data is entered, the corresponding cell is highlighted, and an error icon appears next to it.
 - Hover over the error icon to view the error description.
 
-</details>

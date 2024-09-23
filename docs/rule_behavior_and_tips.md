@@ -22,21 +22,13 @@
 
 ## Rule Priority
 
-<details>
-<summary>Click to expand</summary>
-
 When applying rules, the program first checks **service rules** and then moves to **process rules**. This means that if
 a service matches a rule, it will take precedence. If no matching service rule is found, the program then applies the
 first matching process rule.
 
 > **Note:** Only the first matching rule is applied, so the order of the rules in the configuration is important.
 
-</details>
-
 ## Ignoring a Process
-
-<details>
-<summary>Click to expand</summary>
 
 To ignore a process without applying any specific settings:
 
@@ -47,12 +39,7 @@ To ignore a process without applying any specific settings:
 
 This will ensure that the process is excluded from any modifications by the governor.
 
-</details>
-
 ## Rule for All Processes
-
-<details>
-<summary>Click to expand</summary>
 
 To apply a rule to all processes:
 
@@ -62,12 +49,7 @@ To apply a rule to all processes:
 4. Configure the desired settings (e.g., affinity, priority).
 5. Place this rule at the bottom of the list to allow more specific rules to take precedence.
 
-</details>
-
 ## Disabling Hyperthreading
-
-<details>
-<summary>Click to expand</summary>
 
 To limit a process to physical CPU cores and disable the use of hyperthreaded (logical) cores:
 
@@ -78,12 +60,7 @@ To limit a process to physical CPU cores and disable the use of hyperthreaded (l
 
 This will prevent the process from using hyperthreaded cores, which can be beneficial for certain workloads.
 
-</details>
-
 ## Using Delay to Avoid Side Effects
-
-<details>
-<summary>Click to expand</summary>
 
 For some applications, especially games, applying settings like core affinity immediately upon startup can cause issues.
 Adding a delay ensures the process has time to initialize before adjustments are applied.
@@ -96,12 +73,7 @@ Adding a delay ensures the process has time to initialize before adjustments are
 
 This helps avoid potential problems like sound not working.
 
-</details>
-
 ## Optimizing for Older or Single-Threaded Games
-
-<details>
-<summary>Click to expand</summary>
 
 Older or poorly optimized games that don’t efficiently use multiple cores can stutter if run with the default core
 affinity settings. To improve performance:
@@ -114,12 +86,7 @@ affinity settings. To improve performance:
 
 This setup can help distribute the load more effectively and reduce stuttering.
 
-</details>
-
 ## Fixing Audio Crackling Issues
-
-<details>
-<summary>Click to expand</summary>
 
 To address audio crackling or stuttering under high CPU load, it’s recommended to increase the priority of audio-related
 processes and services to ensure they have sufficient CPU resources.
@@ -143,22 +110,28 @@ usage.
 
 ### Advanced Setup: Load Distribution Across CPU Cores
 
-For all previously added rules related to audio processes, it is recommended to configure **Affinity** to assign specific CPU cores dedicated to audio processing tasks. This helps ensure that audio processes have sufficient CPU resources, minimizing interference from other tasks.
+For all previously added rules related to audio processes, it is recommended to configure **Affinity** to assign
+specific CPU cores dedicated to audio processing tasks. This helps ensure that audio processes have sufficient CPU
+resources, minimizing interference from other tasks.
 
-For example, if you have a **16-thread processor with 8 cores**, you can allocate the last 2 cores (threads 12-15) for audio tasks, while the first 6 cores (threads 0-11) can be reserved for other applications.
+For example, if you have a **16-thread processor with 8 cores**, you can allocate the last 2 cores (threads 12-15) for
+audio tasks, while the first 6 cores (threads 0-11) can be reserved for other applications.
 
 #### Steps:
 
 1. For each previously configured audio process rule:
-   - Set **Affinity** to the last 2 cores (e.g., threads 12-15) for handling audio processing tasks.
+    - Set **Affinity** to the last 2 cores (e.g., threads 12-15) for handling audio processing tasks.
 
 2. After configuring the audio processes, add a new rule for all other processes:
-   - Set **Process Selector** to `*`.
-   - Set **Affinity** to allocate the remaining CPU cores (e.g., threads 0-11) for non-audio tasks.
-   - **Important:** This rule must be placed **last** in the rule list, as it serves as a fallback for any processes that are not explicitly defined in previous rules.
+    - Set **Process Selector** to `*`.
+    - Set **Affinity** to allocate the remaining CPU cores (e.g., threads 0-11) for non-audio tasks.
+    - **Important:** This rule must be placed **last** in the rule list, as it serves as a fallback for any processes
+      that are not explicitly defined in previous rules.
 
-> **Note:** Avoid modifying the **Affinity** for audio services like **AudioSrv** or **AudioEndpointBuilder**, as this may worsen performance. Adjusting the priority for these services is usually sufficient to resolve audio issues such as crackling and stuttering.
+> **Note:** Avoid modifying the **Affinity** for audio services like **AudioSrv** or **AudioEndpointBuilder**, as this
+> may worsen performance. Adjusting the priority for these services is usually sufficient to resolve audio issues such
+> as crackling and stuttering.
 
-This configuration helps distribute the CPU load, isolating audio processes to specific cores, ensuring smoother and more stable sound under high system load.
+This configuration helps distribute the CPU load, isolating audio processes to specific cores, ensuring smoother and
+more stable sound under high system load.
 
-</details>
