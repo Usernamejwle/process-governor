@@ -22,7 +22,7 @@ class ProcessListActions(ttk.Frame):
             text="Refresh",
             event=ActionEvents.REFRESH,
             image=load_img(file=UI_REFRESH),
-            description="**Refreshes** the list of __processes__. \n**Hotkey:** __F5__."
+            description="**Refreshes** the list of __processes__.\n**Hotkey:** __F5__."
         )
 
         self.filterByType = filterByType = EnumCombobox(
@@ -34,7 +34,7 @@ class ProcessListActions(ttk.Frame):
 
         self.search = search = ExtendedEntry(
             self,
-            description="**Searches** processes by __name__ or __attribute__.",
+            description="**Searches** processes by __name__ or __attribute__.\n**Hotkey:** __Ctrl+F__.",
             placeholder="Search",
             width=30
         )
