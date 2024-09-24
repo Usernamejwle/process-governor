@@ -1,8 +1,8 @@
+<a id="document-top"></a>
+
 # Running from source and creating a portable build
 
-[![README](icons/readme.png) README](README.md)
-
----
+[![README](icons/readme.png) README](README.md#documentation)
 
 ## Running from source code
 
@@ -12,6 +12,8 @@ To run **Process Governor** from source code, follow these steps:
 2. Install the required dependencies using `pip`: `pip install -r requirements.txt`
 3. Run the `process-governor.py` script with **administrative privileges**: `python process-governor.py`
 4. [Configure the rules](docs/ui_rule_configurator.md) for processes and services.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Creating a portable build
 
@@ -23,3 +25,5 @@ version:
 3. After the script completes, you will find the portable build in the `dist` folder.
 
 Now you have a portable version of the program that you can use without installation.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>

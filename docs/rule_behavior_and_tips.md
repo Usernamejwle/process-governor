@@ -1,8 +1,11 @@
+<a id="document-top"></a>
+
 # Rule Behavior and Tips
 
-[![README](icons/readme.png) README](README.md)
+[![README](icons/readme.png) README](README.md#documentation)
 
----
+> [!TIP]  
+> Before proceeding, it is recommended to familiarize yourself with [Process Governor UI](ui_process_governor.md).
 
 ## Table of Contents
 
@@ -15,18 +18,16 @@
     - [Optimizing for Older or Single-Threaded Games](#optimizing-for-older-or-single-threaded-games)
     - [Fixing Audio Crackling Issues](#fixing-audio-crackling-issues)
 
----
-
-> **Note:** Before proceeding, it is recommended to familiarize yourself
-> with [Process Governor UI](ui_process_governor.md).
-
 ## Rule Priority
 
 When applying rules, the program first checks **service rules** and then moves to **process rules**. This means that if
 a service matches a rule, it will take precedence. If no matching service rule is found, the program then applies the
 first matching process rule.
 
-> **Note:** Only the first matching rule is applied, so the order of the rules in the configuration is important.
+> [!IMPORTANT]  
+> Only the first matching rule is applied, so the order of the rules in the configuration is important.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Ignoring a Process
 
@@ -39,6 +40,8 @@ To ignore a process without applying any specific settings:
 
 This will ensure that the process is excluded from any modifications by the governor.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ## Rule for All Processes
 
 To apply a rule to all processes:
@@ -48,6 +51,8 @@ To apply a rule to all processes:
 3. Set **Process Selector** to `*` to match all processes.
 4. Configure the desired settings (e.g., affinity, priority).
 5. Place this rule at the bottom of the list to allow more specific rules to take precedence.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Disabling Hyperthreading
 
@@ -59,6 +64,8 @@ To limit a process to physical CPU cores and disable the use of hyperthreaded (l
 4. Set **Affinity** to even-numbered cores only (e.g., `0;2;4;6;8;10;12;14`).
 
 This will prevent the process from using hyperthreaded cores, which can be beneficial for certain workloads.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Using Delay to Avoid Side Effects
 
@@ -73,6 +80,8 @@ Adding a delay ensures the process has time to initialize before adjustments are
 
 This helps avoid potential problems like sound not working.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ## Optimizing for Older or Single-Threaded Games
 
 Older or poorly optimized games that don’t efficiently use multiple cores can stutter if run with the default core
@@ -85,6 +94,8 @@ affinity settings. To improve performance:
 5. Adjust the **Affinity** to exclude CPU core 0 (e.g., `1-15`).
 
 This setup can help distribute the load more effectively and reduce stuttering.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Fixing Audio Crackling Issues
 
@@ -128,10 +139,12 @@ audio tasks, while the first 6 cores (threads 0-11) can be reserved for other ap
     - **Important:** This rule must be placed **last** in the rule list, as it serves as a fallback for any processes
       that are not explicitly defined in previous rules.
 
-> **Note:** Avoid modifying the **Affinity** for audio services like **AudioSrv** or **AudioEndpointBuilder**, as this
+> [!WARNING]  
+> Avoid modifying the **Affinity** for audio services like **AudioSrv** or **AudioEndpointBuilder**, as this
 > may worsen performance. Adjusting the priority for these services is usually sufficient to resolve audio issues such
 > as crackling and stuttering.
 
 This configuration helps distribute the CPU load, isolating audio processes to specific cores, ensuring smoother and
 more stable sound under high system load.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>

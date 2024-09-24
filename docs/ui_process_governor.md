@@ -1,8 +1,8 @@
+<a id="document-top"></a>
+
 # Process Governor UI
 
-[![README](icons/readme.png) README](README.md)
-
----
+[![README](icons/readme.png) README](README.md#documentation)
 
 ## Table of Contents
 
@@ -17,8 +17,6 @@
     - [Editing Rules](#editing-rules)
     - [Error Handling](#error-handling)
 
----
-
 ## System Tray
 
 ![](images/screenshots/tray_menu.png)
@@ -32,6 +30,8 @@ The system tray menu provides quick access to the main program functions:
 - **Check for Updates**: Check for program updates.
 - **Quit**: Exit the program.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ## Main Window
 
 ![](images/screenshots/process_list.png)
@@ -42,6 +42,8 @@ The system tray menu provides quick access to the main program functions:
 
 - In the settings interface, tooltips are available, describing the functions of buttons and fields.
 - Hover over an interface element to view its tooltip.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ### Action Buttons
 
@@ -58,11 +60,15 @@ Main action buttons are available in the settings interface:
     - The button is disabled if there are errors in the settings.
     - If no changes have been made, the save button is also disabled.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### Unsaved Changes Status
 
 ![](images/screenshots/process_rules_unsaved.png)
 
 Unsaved changes are marked with an asterisk (`*`) on the corresponding rule tab.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Process List
 
@@ -75,6 +81,8 @@ The process list provides important information about running processes:
 - **Service Name**: Name of the service, if applicable.
 - **Executable Path**: Full path to the executable file.
 - **Command Line**: Command with which the process was started.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ### Filtering and Search
 
@@ -91,6 +99,8 @@ The process list provides important information about running processes:
 - **Refresh**: Refresh the process list.  
   Hotkey: **F5**.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### Process Context Menu
 
 ![](images/screenshots/process_list_menu.png)
@@ -102,6 +112,8 @@ The process list provides important information about running processes:
 - **Open file location**: Open the folder containing the process’s executable file.
 - **File Properties**: Open file properties.
 - **Service Properties**: Open service properties.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Rule Lists
 
@@ -151,6 +163,8 @@ The rule lists are divided into two categories: **Process Rules** and **Service 
     - If not specified, the settings are applied immediately.
     - Positive values set a delay in seconds before applying the settings.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### Service Rules
 
 ![](images/screenshots/service_rules_only.png)
@@ -166,7 +180,10 @@ The rule lists are divided into two categories: **Process Rules** and **Service 
 
 Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**, and **Delay** are similar to those in
 **Process Rules**.
-> **Note:** The **Selector By** field is not used in **Service Rules** since services are matched only by name.
+> [!TIP]  
+> The **Selector By** field is not used in **Service Rules** since services are matched only by name.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ### Managing Rules
 
@@ -175,6 +192,8 @@ Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**
 - **Add**: Add a new rule.
 - **Del**: Delete the selected rules.
 - **Up/Down**: Move the selected rule up or down in the rule list.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ### Rules List Context Menu
 
@@ -199,6 +218,8 @@ Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**
 - **Delete**: Delete the selected rules.  
   Hotkey: **Del**.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### Editing Rules
 
 ![](images/screenshots/process_rules_add_rule.gif)
@@ -207,6 +228,8 @@ Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**
 2. Enter new data into the selected cell.
 3. After editing, the changes are automatically saved in the table.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### Error Handling
 
 ![](images/screenshots/process_rules_error.png)
@@ -214,3 +237,4 @@ Other parameters such as **Priority**, **I/O Priority**, **Affinity**, **Force**
 - If incorrect data is entered, the corresponding cell is highlighted, and an error icon appears next to it.
 - Hover over the error icon to view the error description.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>

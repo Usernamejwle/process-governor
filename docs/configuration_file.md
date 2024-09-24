@@ -1,8 +1,8 @@
+<a id="document-top"></a>
+
 # Configuration File
 
-[![README](icons/readme.png) README](README.md)
-
----
+[![README](icons/readme.png) README](README.md#documentation)
 
 The `config.json` configuration file manages the behavior of the **Process Governor** application. This file allows
 users to define rules for regulating process priorities, I/O priorities, and CPU core affinity, as well as manage
@@ -10,7 +10,6 @@ services with similar settings.
 
 The application regularly checks the configuration file for changes and applies the updates accordingly.
 
----
 ## Configuration File Example
 
 Below is an example of the configuration file with several rules defined for processes and services:
@@ -73,9 +72,10 @@ Below is an example of the configuration file with several rules defined for pro
   "version": 3
 }
 ```
+
 </details>
 
----
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Structure of the `config.json`
 
@@ -100,7 +100,7 @@ process based on several key parameters:
     - `"Command line"`: Match by command line (e.g., `"App.exe Document.txt"`).
 
 
-- **`selector`** (string): Specifies the name, pattern, or path to the process. 
+- **`selector`** (string): Specifies the name, pattern, or path to the process.
   **Supported wildcards:**
     - `*`: Matches any number of characters.
     - `?`: Matches a single character.
@@ -151,6 +151,8 @@ process based on several key parameters:
     - If not specified, the settings are applied immediately.
     - Positive values set a delay in seconds before applying the settings.
 
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
 ### `serviceRules`
 
 This section contains a list of rules applied to services. Unlike `processRules`, the **Service Rule** does not include
@@ -175,10 +177,12 @@ in `processRules`.
 This field specifies the version of the configuration. It is required for ensuring proper migration and updates when the
 program configuration changes over time.
 
----
+<p align="right">(<a href="#document-top">back to top</a>)</p>
 
 ## Validation
 
 The configuration file undergoes validation to ensure consistency and correctness. If there are any issues, such as
 invalid parameter combinations or missing required fields, the application will notify the user and prevent the
 configuration from being applied until the errors are resolved.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
