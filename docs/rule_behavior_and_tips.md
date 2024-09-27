@@ -10,7 +10,8 @@
 ## Table of Contents
 
 1. [Rule Priority](#rule-priority)
-2. Common Rule Usage Tips
+2. [Core Affinity Inheritance in Windows](#core-affinity-inheritance-in-windows)
+3. Common Rule Usage Tips
     - [Ignoring a Process](#ignoring-a-process)
     - [Rule for All Processes](#rule-for-all-processes)
     - [Disabling Hyperthreading](#disabling-hyperthreading)
@@ -26,6 +27,22 @@ first matching process rule.
 
 > [!IMPORTANT]  
 > Only the first matching rule is applied, so the order of the rules in the configuration is important.
+
+<p align="right">(<a href="#document-top">back to top</a>)</p>
+
+## Core Affinity Inheritance in Windows
+
+In **Windows**, child processes inherit the core affinity settings from their parent processes. For example, if the
+parent process (`explorer.exe`) is restricted to cores 0 and 1, any process launched by it, such as `example.exe`, will
+inherit this restriction and be limited to those same cores.
+
+This behavior means you should carefully configure rules, especially when using wildcard rules like `*`, which apply to
+[all processes](#rule-for-all-processes).
+
+### Sources:
+
+- [Windows Inheritance Documentation](https://learn.microsoft.com/en-us/windows/win32/procthread/inheritance)
+- [Why is processor affinity inherited by child processes?](https://devblogs.microsoft.com/oldnewthing/20050817-10/?p=34553)
 
 <p align="right">(<a href="#document-top">back to top</a>)</p>
 
@@ -48,7 +65,7 @@ To apply a rule to all processes:
 
 1. Go to the **Process Rules** tab.
 2. Add a new rule.
-3. Set **Process Selector** to `*` to match all processes.
+3. Set **Process Selector** to `*` to match all processes (the `*` symbol acts as a wildcard, matching any sequence of characters in the process name).
 4. Configure the desired settings (e.g., affinity, priority).
 5. Place this rule at the bottom of the list to allow more specific rules to take precedence.
 
