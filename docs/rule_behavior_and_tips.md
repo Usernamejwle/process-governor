@@ -33,8 +33,9 @@ first matching process rule.
 ## Core Affinity Inheritance in Windows
 
 In **Windows**, child processes inherit the core affinity settings from their parent processes. For example, if the
-parent process (`explorer.exe`) is restricted to cores 0 and 1, any process launched by it, such as `example.exe`, will
-inherit this restriction and be limited to those same cores.
+parent process (`explorer.exe`) is restricted to cores 0 and 1, any process launched by it, **for example,** `app.exe`,
+will inherit this restriction and be limited to those same cores, unless the application itself or the user changes the
+core affinity (for example, via Task Manager or Process Governor).
 
 This behavior means you should carefully configure rules, especially when using wildcard rules like `*`, which apply to
 [all processes](#rule-for-all-processes).
@@ -65,7 +66,8 @@ To apply a rule to all processes:
 
 1. Go to the **Process Rules** tab.
 2. Add a new rule.
-3. Set **Process Selector** to `*` to match all processes (the `*` symbol acts as a wildcard, matching any sequence of characters in the process name).
+3. Set **Process Selector** to `*` to match all processes (the `*` symbol acts as a wildcard, matching any sequence of
+   characters in the process name).
 4. Configure the desired settings (e.g., affinity, priority).
 5. Place this rule at the bottom of the list to allow more specific rules to take precedence.
 
